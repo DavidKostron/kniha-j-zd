@@ -9,217 +9,337 @@
 <title>Kniha jízd</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#080a0f;--surface:#0f1218;--surface2:#161b24;--border:#1e2535;--border2:#252e40;
-  --text:#dde4f0;--muted:#4a5570;--muted2:#6a7590;--accent:#e8c547;
-  --green:#4ade80;--red:#f87171;--blue:#60a5fa;--orange:#fb923c;
-  --font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
-}
+:root{--bg:#080a0f;--s:#0f1218;--s2:#161b24;--b:#1e2535;--b2:#252e40;--t:#dde4f0;--m:#4a5570;--m2:#6a7590;--a:#e8c547;--g:#4ade80;--r:#f87171;--bl:#60a5fa;--o:#fb923c;--pu:#a78bfa;--font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--font);overflow-x:hidden;}
 #app{min-height:100vh;display:flex;flex-direction:column;}
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px 0;position:sticky;top:0;z-index:50;}
-.header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
-.logo{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
-.app-title{font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-top:4px;}
-.total-km{font-family:var(--mono);font-size:30px;font-weight:300;color:var(--accent);line-height:1;}
-.total-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:right;margin-top:2px;}
-.nav{display:flex;border-top:1px solid var(--border);margin:0 -20px;}
-.nav-btn{flex:1;padding:12px 4px;background:none;border:none;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.5px;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;text-transform:uppercase;}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
-.content{flex:1;padding:20px 16px 100px;max-width:640px;margin:0 auto;width:100%;}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border2);padding:10px 20px;border-radius:30px;font-size:13px;color:var(--text);opacity:0;transition:all 0.3s;z-index:200;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+
+/* HEADER */
+.hdr{background:var(--s);border-bottom:1px solid var(--b);padding:16px 20px 0;position:sticky;top:0;z-index:50;}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.logo{font-size:10px;letter-spacing:3px;color:var(--m);text-transform:uppercase;}
+.ttl{font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-top:4px;}
+.tot{font-family:var(--mono);font-size:30px;font-weight:300;color:var(--a);line-height:1;}
+.tot-lbl{font-size:9px;color:var(--m);letter-spacing:2px;text-transform:uppercase;text-align:right;margin-top:2px;}
+.nav{display:flex;border-top:1px solid var(--b);margin:0 -20px;}
+.nb{flex:1;padding:12px 4px;background:none;border:none;color:var(--m);font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.5px;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;}
+.nb.on{color:var(--a);border-bottom-color:var(--a);}
+.cnt{flex:1;padding:20px 16px 100px;max-width:640px;margin:0 auto;width:100%;}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--b2);padding:10px 20px;border-radius:30px;font-size:13px;color:var(--t);opacity:0;transition:all .3s;z-index:300;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.active-trip-banner{background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(232,197,71,0.06));border:1px solid rgba(251,146,60,0.4);border-radius:14px;padding:16px;margin-bottom:20px;animation:glow 2s ease-in-out infinite alternate;}
-@keyframes glow{from{box-shadow:0 0 10px rgba(251,146,60,0.1);}to{box-shadow:0 0 24px rgba(251,146,60,0.2);}}
-.active-trip-label{font-size:10px;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:8px;}
-.active-trip-route{font-size:16px;font-weight:600;margin-bottom:4px;}
-.active-trip-meta{font-size:12px;color:var(--muted2);line-height:1.6;}
-.field{margin-bottom:14px;}
-.field-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
-.field input,.field select{width:100%;padding:11px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color 0.15s;appearance:none;-webkit-appearance:none;}
-.field input:focus,.field select:focus{border-color:var(--accent);}
-.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
+
+/* MODAL OVERLAY */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;}
+.modal{background:var(--s);border:1px solid var(--b2);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--m2);margin-bottom:20px;line-height:1.5;}
+.modal-close{position:absolute;top:16px;right:20px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;width:32px;height:32px;cursor:pointer;color:var(--m2);font-size:16px;display:flex;align-items:center;justify-content:center;}
+
+/* ACTIVE BANNER */
+.act-banner{background:linear-gradient(135deg,rgba(251,146,60,.12),rgba(232,197,71,.06));border:1px solid rgba(251,146,60,.4);border-radius:14px;padding:16px;margin-bottom:20px;animation:glow 2s ease-in-out infinite alternate;}
+@keyframes glow{from{box-shadow:0 0 10px rgba(251,146,60,.1);}to{box-shadow:0 0 24px rgba(251,146,60,.2);}}
+.act-lbl{font-size:10px;letter-spacing:2px;color:var(--o);text-transform:uppercase;margin-bottom:8px;}
+.act-route{font-size:16px;font-weight:600;margin-bottom:4px;}
+.act-meta{font-size:12px;color:var(--m2);line-height:1.6;}
+
+/* FIELDS */
+.fld{margin-bottom:14px;position:relative;}
+.flbl{font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:6px;}
+.fld input,.fld select{width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
+.fld input:focus,.fld select:focus{border-color:var(--a);}
+.fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.driver-toggle{display:flex;gap:8px;}
-.driver-btn{flex:1;padding:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;text-align:center;}
-.driver-btn.active{background:rgba(232,197,71,0.1);border-color:var(--accent);color:var(--accent);}
+
+/* AUTOCOMPLETE */
+.ac-list{position:absolute;top:100%;left:0;right:0;background:var(--s2);border:1px solid var(--b2);border-radius:8px;z-index:100;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.ac-item{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--b);line-height:1.4;}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:active{background:var(--b2);}
+.ac-name{font-weight:500;}
+.ac-addr{font-size:11px;color:var(--m2);margin-top:2px;}
+
+/* DRIVER TOGGLE */
+.drv-tog{display:flex;gap:8px;}
+.drv-btn{flex:1;padding:11px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;}
+.drv-btn.on{background:rgba(232,197,71,.1);border-color:var(--a);color:var(--a);}
+
+/* GPS ROW */
 .gps-row{display:flex;gap:8px;}
-.gps-row input{flex:1;}
-.gps-btn{padding:11px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-family:var(--font);font-size:12px;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
-.gps-btn.loading{color:var(--accent);border-color:var(--accent);animation:pulse 1s infinite;}
-.gps-btn.done{color:var(--green);border-color:var(--green);}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
-.suggestion-box{border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.suggestion-box.blue{background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);}
-.suggestion-box.green{background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);}
-.suggestion-text{font-size:12px;color:var(--blue);flex:1;line-height:1.5;}
-.suggestion-text.green{color:var(--green);}
-.suggestion-btn{padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;font-weight:600;background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.3);color:var(--blue);}
-.suggestion-btn.green{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:var(--green);}
-.km-diff{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.km-diff-label{font-size:11px;color:var(--muted2);}
-.km-diff-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--green);}
-.btn{width:100%;padding:15px;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;margin-top:8px;}
-.btn:active{transform:scale(0.98);opacity:0.9;}
-.btn-yellow{background:var(--accent);color:var(--bg);}
-.btn-orange{background:var(--orange);color:var(--bg);}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
-.mode-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.5px;margin-bottom:16px;}
-.badge-start{background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.3);}
-.badge-end{background:rgba(251,146,60,0.1);color:var(--orange);border:1px solid rgba(251,146,60,0.3);}
-.badge-edit{background:rgba(96,165,250,0.1);color:var(--blue);border:1px solid rgba(96,165,250,0.3);}
-.filter-row{display:flex;gap:6px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
-.filter-btn{padding:6px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;color:var(--muted2);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;}
-.filter-btn.active{background:rgba(232,197,71,0.1);border-color:var(--accent);color:var(--accent);}
-.export-btn{margin-left:auto;padding:6px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;color:var(--muted2);font-family:var(--font);font-size:11px;cursor:pointer;}
-.records-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:12px;}
-.records-meta span:last-child{font-family:var(--mono);color:var(--accent);}
-.record-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
-.record-card.incomplete{border-left:3px solid var(--red);}
-.record-card.in-progress{border-left:3px solid var(--orange);}
-.rec-top{display:flex;justify-content:space-between;align-items:flex-start;}
-.rec-meta{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
-.rec-date{font-family:var(--mono);font-size:11px;color:var(--muted2);}
-.rec-driver{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;}
-.driver-d{background:rgba(96,165,250,0.1);color:var(--blue);}
-.driver-m{background:rgba(167,139,250,0.1);color:#a78bfa;}
-.rec-route{font-size:14px;font-weight:600;margin-bottom:4px;}
-.rec-purpose{font-size:12px;color:var(--muted2);}
-.rec-note{font-size:11px;color:var(--muted);margin-top:3px;}
-.rec-km{font-family:var(--mono);font-size:20px;color:var(--accent);}
-.rec-km-label{font-size:9px;color:var(--muted);text-align:right;}
-.rec-badge{font-size:10px;margin-top:5px;}
-.rec-actions{display:flex;gap:6px;margin-top:10px;justify-content:flex-end;}
-.action-btn{padding:5px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--muted2);font-size:11px;cursor:pointer;font-family:var(--font);}
-.action-btn.del{color:var(--red);border-color:rgba(248,113,113,0.2);}
-.action-btn.finish{color:var(--orange);border-color:rgba(251,146,60,0.3);}
-.del-confirm{margin-top:10px;padding:10px 12px;background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.2);border-radius:8px;display:flex;gap:8px;align-items:center;}
-.del-confirm span{flex:1;font-size:12px;color:var(--red);}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
-.stat-val{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--accent);}
-.stat-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
-.section-title{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;margin-top:20px;}
-.stat-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
-.stat-row-name{font-size:13px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.stat-row-sub{font-size:10px;color:var(--muted);margin-top:2px;}
-.stat-row-km{font-family:var(--mono);font-size:16px;color:var(--accent);flex-shrink:0;margin-left:12px;}
-.info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
-.info-card-title{font-size:13px;font-weight:600;margin-bottom:6px;}
-.info-card-body{font-size:12px;color:var(--muted2);line-height:1.7;}
-.notif-btn{width:100%;padding:12px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;transition:all 0.2s;}
-.notif-btn.enable{background:rgba(232,197,71,0.1);border:1px solid var(--accent);color:var(--accent);}
-.notif-btn.enabled{background:rgba(74,222,128,0.1);border:1px solid var(--green);color:var(--green);}
-.notif-btn.denied-state{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);}
-code{font-family:var(--mono);font-size:11px;color:var(--accent);word-break:break-all;display:block;margin-top:4px;}
-code.orange{color:var(--orange);}
-.empty-state{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;}
-.incomplete-banner{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.gps-row .fld{flex:1;margin-bottom:0;}
+.gps-btn{padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-family:var(--font);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;align-self:flex-end;}
+.gps-btn.load{color:var(--a);border-color:var(--a);animation:pulse 1s infinite;}
+.gps-btn.done{color:var(--g);border-color:var(--g);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* SUGGESTIONS */
+.sug{border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.sug.blue{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);}
+.sug.green{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);}
+.sug-txt{font-size:12px;color:var(--bl);flex:1;line-height:1.5;}
+.sug-txt.green{color:var(--g);}
+.sug-btn{padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;font-weight:600;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);color:var(--bl);}
+.sug-btn.green{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.3);color:var(--g);}
+
+/* KM DIFF */
+.kmd{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kmd-lbl{font-size:11px;color:var(--m2);}
+.kmd-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--g);}
+
+/* BUTTONS */
+.btn{width:100%;padding:15px;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s;margin-top:8px;}
+.btn:active{transform:scale(.98);opacity:.9;}
+.btn-y{background:var(--a);color:var(--bg);}
+.btn-o{background:var(--o);color:var(--bg);}
+.btn-g{background:rgba(74,222,128,.15);color:var(--g);border:1px solid rgba(74,222,128,.3);}
+.btn-bl{background:rgba(96,165,250,.15);color:var(--bl);border:1px solid rgba(96,165,250,.3);}
+.btn-pu{background:rgba(167,139,250,.15);color:var(--pu);border:1px solid rgba(167,139,250,.3);}
+.btn-ghost{background:transparent;color:var(--m);border:1px solid var(--b2);}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:16px;}
+.badge-s{background:rgba(74,222,128,.1);color:var(--g);border:1px solid rgba(74,222,128,.3);}
+.badge-e{background:rgba(251,146,60,.1);color:var(--o);border:1px solid rgba(251,146,60,.3);}
+.badge-ed{background:rgba(96,165,250,.1);color:var(--bl);border:1px solid rgba(96,165,250,.3);}
+
+/* RECORDS */
+.frow{display:flex;gap:6px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.fbtn{padding:6px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;}
+.fbtn.on{background:rgba(232,197,71,.1);border-color:var(--a);color:var(--a);}
+.exp-btn{margin-left:auto;padding:6px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;cursor:pointer;}
+.rec-meta-row{display:flex;justify-content:space-between;font-size:11px;color:var(--m);margin-bottom:12px;}
+.rec-meta-row span:last-child{font-family:var(--mono);color:var(--a);}
+.card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.card.inc{border-left:3px solid var(--r);}
+.card.prog{border-left:3px solid var(--o);}
+.card.fuel{border-left:3px solid var(--bl);}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.cmeta{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+.cdate{font-family:var(--mono);font-size:11px;color:var(--m2);}
+.cdrv{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.dd{background:rgba(96,165,250,.1);color:var(--bl);}
+.dm{background:rgba(167,139,250,.1);color:var(--pu);}
+.croute{font-size:14px;font-weight:600;margin-bottom:4px;}
+.cpurp{font-size:12px;color:var(--m2);}
+.cnote{font-size:11px;color:var(--m);margin-top:3px;}
+.ckm{font-family:var(--mono);font-size:20px;color:var(--a);}
+.ckm-lbl{font-size:9px;color:var(--m);text-align:right;}
+.cbadge{font-size:10px;margin-top:5px;}
+.cact{display:flex;gap:6px;margin-top:10px;justify-content:flex-end;}
+.abtn{padding:5px 10px;background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--m2);font-size:11px;cursor:pointer;font-family:var(--font);}
+.abtn.del{color:var(--r);border-color:rgba(248,113,113,.2);}
+.abtn.fin{color:var(--o);border-color:rgba(251,146,60,.3);}
+.del-cf{margin-top:10px;padding:10px 12px;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:8px;display:flex;gap:8px;align-items:center;}
+.del-cf span{flex:1;font-size:12px;color:var(--r);}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.sc{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;text-align:center;}
+.sv{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--a);}
+.slbl{font-size:9px;color:var(--m);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.stitle{font-size:9px;letter-spacing:3px;color:var(--m);text-transform:uppercase;margin-bottom:12px;margin-top:20px;}
+.sr{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.srn{font-size:13px;color:var(--m2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.srs{font-size:10px;color:var(--m);margin-top:2px;}
+.srk{font-family:var(--mono);font-size:16px;color:var(--a);flex-shrink:0;margin-left:12px;}
+
+/* SETTINGS */
+.ic{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:14px;}
+.ict{font-size:13px;font-weight:600;margin-bottom:6px;}
+.icb{font-size:12px;color:var(--m2);line-height:1.7;}
+.nbt{width:100%;padding:12px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;transition:all .2s;}
+.nbt.en{background:rgba(232,197,71,.1);border:1px solid var(--a);color:var(--a);}
+.nbt.ok{background:rgba(74,222,128,.1);border:1px solid var(--g);color:var(--g);}
+.nbt.no{background:var(--s2);border:1px solid var(--b2);color:var(--m);}
+code{font-family:var(--mono);font-size:11px;color:var(--a);word-break:break-all;display:block;margin-top:4px;}
+code.o{color:var(--o);}
+
+/* FUEL */
+.fuel-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--b);}
+.fuel-row:last-child{border-bottom:none;}
+.fuel-lbl{font-size:11px;color:var(--m2);}
+.fuel-val{font-family:var(--mono);font-size:13px;color:var(--bl);}
+
+.empty{text-align:center;color:var(--m);padding:60px 20px;font-size:14px;}
+.inc-banner{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="header">
-    <div class="header-top">
-      <div><div class="logo">KS — Firemní vozidlo</div><div class="app-title">Kniha jízd</div></div>
-      <div><div class="total-km" id="totalKm">0</div><div class="total-label">km celkem</div></div>
+  <div class="hdr">
+    <div class="hdr-top">
+      <div><div class="logo">KS — Firemní vozidlo</div><div class="ttl">Kniha jízd</div></div>
+      <div><div class="tot" id="totKm">0</div><div class="tot-lbl">km celkem</div></div>
     </div>
     <nav class="nav">
-      <button class="nav-btn active" onclick="setView('add')" id="nav-add">＋ Jízda</button>
-      <button class="nav-btn" onclick="setView('list')" id="nav-list">Záznamy</button>
-      <button class="nav-btn" onclick="setView('stats')" id="nav-stats">Přehled</button>
-      <button class="nav-btn" onclick="setView('settings')" id="nav-settings">⚙</button>
+      <button class="nb on" onclick="setView('add')" id="nav-add">＋ Jízda</button>
+      <button class="nb" onclick="setView('list')" id="nav-list">Záznamy</button>
+      <button class="nb" onclick="setView('stats')" id="nav-stats">Přehled</button>
+      <button class="nb" onclick="setView('settings')" id="nav-settings">⚙</button>
     </nav>
   </div>
-  <div class="content" id="content"></div>
+  <div class="cnt" id="cnt"></div>
 </div>
 <div class="toast" id="toast"></div>
-<script>
-let db;
-function openDB(){return new Promise((res,rej)=>{const req=indexedDB.open('knjizd_v3',1);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('rides'))d.createObjectStore('rides',{keyPath:'id',autoIncrement:true});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'});};req.onsuccess=e=>{db=e.target.result;res();};req.onerror=()=>rej(req.error);});}
-const getTx=(s,m)=>db.transaction(s,m).objectStore(s);
-const dbAll=()=>new Promise((res,rej)=>{const r=getTx('rides','readonly').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej();});
-const dbPut=(s,o)=>new Promise((res,rej)=>{const r=getTx(s,'readwrite').put(o);r.onsuccess=()=>res(r.result);r.onerror=()=>rej();});
-const dbGet=(s,k)=>new Promise(res=>{const r=getTx(s,'readonly').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);});
-const dbDel=(s,k)=>new Promise((res,rej)=>{const r=getTx(s,'readwrite').delete(k);r.onsuccess=()=>res();r.onerror=()=>rej();});
+<div id="modals"></div>
 
-let rides=[],currentView='add',editId=null,deleteConfirmId=null,filterDriver='all',savedFlash=false,activeRideId=null;
-let gpsFromLoading=false,gpsToLoading=false,kmSuggestion=null;
+<script>
+// ── DB ────────────────────────────────────────────────────────────────────────
+let db;
+function openDB(){return new Promise((res,rej)=>{
+  const req=indexedDB.open('knjizd_v4',1);
+  req.onupgradeneeded=e=>{const d=e.target.result;
+    if(!d.objectStoreNames.contains('rides'))d.createObjectStore('rides',{keyPath:'id',autoIncrement:true});
+    if(!d.objectStoreNames.contains('fuels'))d.createObjectStore('fuels',{keyPath:'id',autoIncrement:true});
+    if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'});
+  };
+  req.onsuccess=e=>{db=e.target.result;res();};req.onerror=()=>rej(req.error);
+});}
+const gt=(s,m)=>db.transaction(s,m).objectStore(s);
+const dbAll=s=>new Promise((res,rej)=>{const r=gt(s,'readonly').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej();});
+const dbPut=(s,o)=>new Promise((res,rej)=>{const r=gt(s,'readwrite').put(o);r.onsuccess=()=>res(r.result);r.onerror=()=>rej();});
+const dbGet=(s,k)=>new Promise(res=>{const r=gt(s,'readonly').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);});
+const dbDel=(s,k)=>new Promise((res,rej)=>{const r=gt(s,'readwrite').delete(k);r.onsuccess=()=>res();r.onerror=()=>rej();});
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let rides=[],fuels=[],cv='add',editId=null,delId=null,fDriver='all',flash=false,activeRideId=null;
+let gpsFL=false,gpsToL=false,kmSug=null;
 const DRIVERS=['David','Manželka'];
 const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Showroom Doksany','Kontrola zaměstnance','Freediving / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
 let form={};
+let acFromResults=[],acToResults=[],acFromTimer=null,acToTimer=null;
+
+// ── PERSISTENT FORM STATE ─────────────────────────────────────────────────────
+function saveFormLS(){
+  try{localStorage.setItem('form_v4',JSON.stringify({
+    purpose:form.purpose,purposeCustom:form.purposeCustom,
+    note:form.note,driver:form.driver,kmStart:form.kmStart
+  }));}catch(e){}
+}
+function loadFormLS(){
+  try{const s=localStorage.getItem('form_v4');return s?JSON.parse(s):null;}catch(e){return null;}
+}
 
 function resetForm(kmStart){
-  const lp=localStorage.getItem('lp')||'';
-  form={date:todayStr(),time:nowTime(),driver:'David',from:'',fromGps:null,to:'',toGps:null,purpose:lp,purposeCustom:'',kmStart:kmStart||'',kmEnd:'',note:''};
-  kmSuggestion=null;
+  const saved=loadFormLS();
+  const lp=saved?.purpose||localStorage.getItem('lp')||'';
+  form={
+    date:todayStr(),time:nowTime(),
+    driver:saved?.driver||'David',
+    from:'',fromGps:null,to:'',toGps:null,
+    purpose:lp,
+    purposeCustom:saved?.purposeCustom||'',
+    kmStart:kmStart!==undefined?kmStart:(saved?.kmStart||''),
+    kmEnd:'',
+    note:saved?.note||''
+  };
+  kmSug=null;acFromResults=[];acToResults=[];
 }
+
 function todayStr(){return new Date().toISOString().split('T')[0];}
 function nowTime(){return new Date().toTimeString().slice(0,5);}
-function fmtDate(d){const[y,m,day]=d.split('-');return`${day}.${m}.${y}`;}
+function fmtD(d){const[y,m,day]=d.split('-');return`${day}.${m}.${y}`;}
 function kmDiff(s,e){const a=parseFloat(s),b=parseFloat(e);return(!isNaN(a)&&!isNaN(b)&&b>=a)?Math.round((b-a)*10)/10:null;}
 
-function getGPS(field){
-  if(!navigator.geolocation){showToast('GPS není dostupná');return;}
-  if(field==='from')gpsFromLoading=true;else gpsToLoading=true;
-  render();
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    const{latitude:lat,longitude:lng}=pos.coords;
-    const addr=await reverseGeocode(lat,lng);
-    if(field==='from'){form.from=addr;form.fromGps={lat,lng};gpsFromLoading=false;}
-    else{form.to=addr;form.toGps={lat,lng};gpsToLoading=false;tryEstimateKm();}
-    render();showToast('📍 Poloha zaznamenána');
-  },()=>{
-    if(field==='from')gpsFromLoading=false;else gpsToLoading=false;
-    render();showToast('GPS selhala — zadej adresu ručně');
-  },{timeout:10000,enableHighAccuracy:true});
+// ── AUTOCOMPLETE ──────────────────────────────────────────────────────────────
+async function searchAddr(q){
+  if(!q||q.length<3)return[];
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1&countrycodes=cz,sk`);
+    const d=await r.json();
+    return d.map(x=>({
+      name:[x.address.road,x.address.house_number].filter(Boolean).join(' ')||x.name||x.display_name.split(',')[0],
+      full:[x.address.road,x.address.house_number,x.address.city||x.address.town||x.address.village,x.address.postcode].filter(Boolean).join(', '),
+      display:x.display_name
+    }));
+  }catch{return[];}
 }
 
-async function reverseGeocode(lat,lng){
+function onFromInput(val){
+  form.from=val;form.fromGps=null;saveFormLS();
+  clearTimeout(acFromTimer);
+  if(val.length<3){acFromResults=[];render();return;}
+  acFromTimer=setTimeout(async()=>{acFromResults=await searchAddr(val);render();},400);
+}
+function onToInput(val){
+  form.to=val;form.toGps=null;
+  clearTimeout(acToTimer);
+  if(val.length<3){acToResults=[];render();return;}
+  acToTimer=setTimeout(async()=>{acToResults=await searchAddr(val);render();},400);
+}
+function pickFrom(name,full){form.from=full||name;form.fromGps=null;acFromResults=[];saveFormLS();render();}
+function pickTo(name,full){form.to=full||name;form.toGps=null;acToResults=[];render();}
+
+// ── GPS ───────────────────────────────────────────────────────────────────────
+function getGPS(field,callback){
+  if(!navigator.geolocation){showToast('GPS není dostupná');return;}
+  if(field==='from')gpsFL=true;else gpsToL=true;
+  if(callback){}else render();
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const{latitude:lat,longitude:lng}=pos.coords;
+    const addr=await revGeo(lat,lng);
+    if(field==='from'){form.from=addr;form.fromGps={lat,lng};gpsFL=false;saveFormLS();}
+    else{form.to=addr;form.toGps={lat,lng};gpsToL=false;tryEst();}
+    if(callback)callback();else{render();showToast('📍 Poloha zaznamenána');}
+  },()=>{
+    if(field==='from')gpsFL=false;else gpsToL=false;
+    if(callback)callback();else{render();showToast('GPS selhala — zadej adresu ručně');}
+  },{timeout:10000,enableHighAccuracy:true});
+}
+async function revGeo(lat,lng){
   try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);const d=await r.json();const a=d.address;return[a.road,a.house_number,a.city||a.town||a.village].filter(Boolean).join(' ')||`${lat.toFixed(4)},${lng.toFixed(4)}`;}
   catch{return`${lat.toFixed(4)},${lng.toFixed(4)}`;}
 }
-
-function tryEstimateKm(){
+function tryEst(){
   if(!form.fromGps||!form.toGps||!form.kmStart)return;
   const{lat:la,lng:lo}=form.fromGps,{lat:lb,lng:lp}=form.toGps;
   const R=6371,dLat=(lb-la)*Math.PI/180,dLng=(lp-lo)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(la*Math.PI/180)*Math.cos(lb*Math.PI/180)*Math.sin(dLng/2)**2;
   const dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-  const roadKm=Math.round(dist*1.3*1.05);
+  const road=Math.round(dist*1.3*1.05);
   const base=parseFloat(form.kmStart);
-  if(!isNaN(base)&&roadKm>0)kmSuggestion=Math.round(base+roadKm);
+  if(!isNaN(base)&&road>0)kmSug=Math.round(base+road);
 }
 
+// ── CRUD RIDES ────────────────────────────────────────────────────────────────
 async function startRide(){
   if(!form.from){showToast('Vyplň odkud');return;}
   const pf=form.purpose==='Jiné'?form.purposeCustom:form.purpose;
-  if(pf)localStorage.setItem('lp',pf);
-  const ride={date:form.date,time:form.time,driver:form.driver,from:form.from,fromGps:form.fromGps,to:'',toGps:null,purpose:pf||'',kmStart:form.kmStart,kmEnd:'',km:null,note:form.note,inProgress:true,createdAt:Date.now()};
+  if(pf){localStorage.setItem('lp',pf);}
+  saveFormLS();
+  const ride={date:form.date,time:form.time,driver:form.driver,from:form.from,fromGps:form.fromGps,to:'',toGps:null,purpose:pf||'',kmStart:form.kmStart,kmEnd:'',km:null,note:form.note,stops:[],inProgress:true,createdAt:Date.now()};
   const id=await dbPut('rides',ride);
-  activeRideId=id;
-  await dbPut('meta',{key:'activeRideId',value:id});
-  await reload();updateTotal();
-  showToast('🚗 Jízda zahájena a uložena');
-  savedFlash=true;render();setTimeout(()=>{savedFlash=false;render();},2000);
+  activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
+  await reload();updateTotal();showToast('🚗 Jízda zahájena a uložena');
+  flash=true;render();setTimeout(()=>{flash=false;render();},2000);
 }
 
-async function finishRide(){
-  if(!form.to){showToast('Vyplň kam');return;}
+async function finishRide(toAddr,toGps,kmEnd){
   const id=editId||activeRideId;
   if(!id){showToast('Nenalezena aktivní jízda');return;}
-  const existing=rides.find(r=>r.id===id);
-  if(!existing){showToast('Jízda nenalezena');return;}
+  const ex=rides.find(r=>r.id===id);if(!ex)return;
   const pf=form.purpose==='Jiné'?form.purposeCustom:form.purpose;
   if(pf)localStorage.setItem('lp',pf);
-  const km=kmDiff(form.kmStart,form.kmEnd);
-  const updated={...existing,to:form.to,toGps:form.toGps||null,purpose:pf||existing.purpose,kmStart:form.kmStart||existing.kmStart,kmEnd:form.kmEnd,km,note:form.note||existing.note,inProgress:false};
-  await dbPut('rides',updated);
+  const km=kmDiff(ex.kmStart,kmEnd);
+  const upd={...ex,to:toAddr,toGps:toGps||null,purpose:pf||ex.purpose,kmEnd:kmEnd||'',km,note:form.note||ex.note,inProgress:false};
+  await dbPut('rides',upd);
   activeRideId=null;await dbDel('meta','activeRideId');editId=null;
-  await reload();const lastKm=form.kmEnd||'';resetForm(lastKm);
+  await reload();const lk=kmEnd||'';resetForm(lk);
   updateTotal();showToast('✓ Jízda dokončena');
-  savedFlash=true;render();setTimeout(()=>{savedFlash=false;render();},2000);
+  closeModal();flash=true;render();setTimeout(()=>{flash=false;render();},2000);
+}
+
+async function addStop(){
+  const id=activeRideId;if(!id)return;
+  const ex=rides.find(r=>r.id===id);if(!ex)return;
+  const stop={time:nowTime(),note:'Zastávka'};
+  const upd={...ex,stops:[...(ex.stops||[]),stop]};
+  await dbPut('rides',upd);await reload();
+  showToast('🅿 Zastávka zaznamenána — jízda pokračuje');
+  closeModal();render();
 }
 
 async function saveFullRide(){
@@ -227,174 +347,398 @@ async function saveFullRide(){
   const pf=form.purpose==='Jiné'?form.purposeCustom:form.purpose;
   if(pf)localStorage.setItem('lp',pf);
   const km=kmDiff(form.kmStart,form.kmEnd);
-  const ride={date:form.date,time:form.time,driver:form.driver,from:form.from,fromGps:form.fromGps,to:form.to,toGps:form.toGps||null,purpose:pf||'',kmStart:form.kmStart,kmEnd:form.kmEnd,km,note:form.note,inProgress:false,createdAt:Date.now()};
+  const ride={date:form.date,time:form.time,driver:form.driver,from:form.from,fromGps:form.fromGps,to:form.to,toGps:form.toGps||null,purpose:pf||'',kmStart:form.kmStart,kmEnd:form.kmEnd,km,note:form.note,stops:[],inProgress:false,createdAt:Date.now()};
   if(editId){ride.id=editId;await dbPut('rides',ride);editId=null;}else await dbPut('rides',ride);
-  const lastKm=form.kmEnd||'';await reload();resetForm(lastKm);
+  const lk=form.kmEnd||'';await reload();resetForm(lk);
   updateTotal();showToast('✓ Jízda uložena');
-  savedFlash=true;render();setTimeout(()=>{savedFlash=false;render();},2000);
+  flash=true;render();setTimeout(()=>{flash=false;render();},2000);
 }
 
 async function openFinish(id){
   const r=rides.find(x=>x.id===id);if(!r)return;
   editId=id;
-  form={date:r.date,time:r.time||nowTime(),driver:r.driver,from:r.from,fromGps:r.fromGps||null,to:'',toGps:null,purpose:PURPOSES.includes(r.purpose)?r.purpose:(r.purpose?'Jiné':''),purposeCustom:PURPOSES.includes(r.purpose)?'':(r.purpose||''),kmStart:r.kmStart||'',kmEnd:'',note:r.note||''};
-  kmSuggestion=null;setView('add');
-  setTimeout(()=>getGPS('to'),600);showToast('🏁 Zaznamenávám příjezd...');
+  form={...form,date:r.date,time:r.time||nowTime(),driver:r.driver,from:r.from,fromGps:r.fromGps||null,purpose:PURPOSES.includes(r.purpose)?r.purpose:(r.purpose?'Jiné':''),purposeCustom:PURPOSES.includes(r.purpose)?'':(r.purpose||''),kmStart:r.kmStart||'',note:r.note||''};
+  showEndModal(r);
 }
 
 async function editRide(id){
   const r=rides.find(x=>x.id===id);if(!r)return;
   form={date:r.date,time:r.time||nowTime(),driver:r.driver,from:r.from,fromGps:r.fromGps||null,to:r.to,toGps:r.toGps||null,purpose:PURPOSES.includes(r.purpose)?r.purpose:(r.purpose?'Jiné':''),purposeCustom:PURPOSES.includes(r.purpose)?'':(r.purpose||''),kmStart:r.kmStart||'',kmEnd:r.kmEnd||'',note:r.note||''};
-  kmSuggestion=null;editId=id;setView('add');
+  kmSug=null;acFromResults=[];acToResults=[];editId=id;setView('add');
 }
 
-async function deleteRide(id){
+async function delRide(id){
   if(activeRideId===id){activeRideId=null;await dbDel('meta','activeRideId');}
-  await dbDel('rides',id);await reload();updateTotal();deleteConfirmId=null;render();showToast('Smazáno');
+  await dbDel('rides',id);await reload();updateTotal();delId=null;render();showToast('Smazáno');
 }
 
-async function reload(){rides=await dbAll();rides.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));}
+// ── CRUD FUELS ────────────────────────────────────────────────────────────────
+async function saveFuel(data){
+  await dbPut('fuels',{...data,createdAt:Date.now()});
+  fuels=await dbAll('fuels');fuels.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  showToast('⛽ Tankování uloženo');closeModal();render();
+}
+async function delFuel(id){
+  await dbDel('fuels',id);fuels=await dbAll('fuels');fuels.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  render();showToast('Smazáno');
+}
 
-function updateTotal(){const t=rides.filter(r=>!r.inProgress).reduce((a,r)=>a+(r.km||0),0);const el=document.getElementById('totalKm');if(el)el.textContent=t.toLocaleString('cs-CZ');}
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+async function reload(){
+  rides=await dbAll('rides');rides.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  fuels=await dbAll('fuels');fuels.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+function updateTotal(){const t=rides.filter(r=>!r.inProgress).reduce((a,r)=>a+(r.km||0),0);const el=document.getElementById('totKm');if(el)el.textContent=t.toLocaleString('cs-CZ');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-function isIncomplete(r){return!r.inProgress&&(!r.purpose||!r.kmStart||!r.kmEnd||!r.from||!r.to);}
-function exportCSV(){const src=filterDriver==='all'?rides:rides.filter(r=>r.driver===filterDriver);const hdr='Datum;Čas;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';const rows=src.map(r=>[r.date,r.time||'',r.driver,r.from,r.to,r.purpose,r.kmStart,r.kmEnd,r.km??'',r.note??''].join(';'));const blob=new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`kniha-jizd-${todayStr()}.csv`;a.click();}
+function isInc(r){return!r.inProgress&&(!r.purpose||!r.kmStart||!r.kmEnd||!r.from||!r.to);}
+function exportCSV(){
+  const src=fDriver==='all'?rides:rides.filter(r=>r.driver===fDriver);
+  const hdr='Datum;Čas;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';
+  const rows=src.map(r=>[r.date,r.time||'',r.driver,r.from,r.to,r.purpose,r.kmStart,r.kmEnd,r.km??'',r.note??''].join(';'));
+  const blob=new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`jizdy-${todayStr()}.csv`;a.click();
+}
 
-async function handleUrlAction(action){
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function closeModal(){document.getElementById('modals').innerHTML='';}
+
+function showEndModal(activeRide){
+  let toVal='',toGpsVal=null,kmEndVal='',noteVal=activeRide.note||'',acRes=[],acTmr=null,gpsL=false,localKmSug=null;
+
+  function renderModal(){
+    const km=kmDiff(activeRide.kmStart,kmEndVal);
+    document.getElementById('modals').innerHTML=`
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="position:relative;">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div class="modal-title">🏁 Ukončení jízdy</div>
+        <div class="modal-sub">${activeRide.from} · ${activeRide.driver} · ${fmtD(activeRide.date)} ${activeRide.time||''}<br>Start: ${activeRide.kmStart?activeRide.kmStart+' km':'?'} · ${activeRide.purpose||'účel nevyplněn'}</div>
+
+        <div class="fld" style="position:relative;">
+          <div class="flbl">Kam (příjezd)</div>
+          <div class="gps-row">
+            <div class="fld" style="margin-bottom:0;flex:1;position:relative;">
+              <input id="end-to" placeholder="Adresa příjezdu" value="${toVal}"
+                oninput="endToInput(this.value)"
+                style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;">
+              <div id="end-ac"></div>
+            </div>
+            <button class="gps-btn ${gpsL?'load':toGpsVal?'done':''}" onclick="endGetGPS()" style="align-self:center;">
+              ${gpsL?'⟳':toGpsVal?'✓ GPS':'📍 GPS'}
+            </button>
+          </div>
+        </div>
+
+        <div class="fld">
+          <div class="flbl">KM — příjezd</div>
+          <input type="number" placeholder="${activeRide.kmStart?parseInt(activeRide.kmStart)+50:''}" value="${kmEndVal}"
+            oninput="endKmInput(this.value)"
+            style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;">
+        </div>
+
+        ${localKmSug&&!kmEndVal?`
+        <div class="sug green" style="margin-bottom:14px;">
+          <div class="sug-txt green">Odhadovaný příjezd (GPS +5%): <strong>${localKmSug} km</strong></div>
+          <button class="sug-btn green" onclick="endAcceptKm()">Použít</button>
+        </div>`:''}
+
+        ${km!==null?`<div class="kmd"><span class="kmd-lbl">Vzdálenost jízdy</span><span class="kmd-val">${km} km</span></div>`:''}
+
+        <div class="fld">
+          <div class="flbl">Poznámka</div>
+          <input placeholder="Jméno klienta, agenda..." value="${noteVal}"
+            oninput="endNoteInput(this.value)"
+            style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;">
+        </div>
+
+        <button class="btn btn-o" onclick="endFinish()" style="margin-top:4px;">🏁 Dokončit jízdu</button>
+        <div class="btn-row">
+          <button class="btn btn-pu" onclick="endStop()">🅿 Zastávka</button>
+          <button class="btn btn-ghost" onclick="closeModal()">Pokračovat later</button>
+        </div>
+      </div>
+    </div>`;
+
+    // Re-attach AC
+    const acEl=document.getElementById('end-ac');
+    if(acRes.length>0&&acEl){
+      acEl.innerHTML=`<div class="ac-list">${acRes.map((x,i)=>`<div class="ac-item" onclick="endPickAddr(${i})"><div class="ac-name">${x.name}</div><div class="ac-addr">${x.full}</div></div>`).join('')}</div>`;
+    }
+  }
+
+  // Modal-scoped functions exposed to window
+  window.endToInput=val=>{
+    toVal=val;toGpsVal=null;
+    clearTimeout(acTmr);
+    if(val.length<3){acRes=[];renderModal();return;}
+    acTmr=setTimeout(async()=>{acRes=await searchAddr(val);renderModal();},400);
+  };
+  window.endPickAddr=(i)=>{toVal=acRes[i].full||acRes[i].name;toGpsVal=null;acRes=[];renderModal();};
+  window.endKmInput=val=>{kmEndVal=val;localKmSug=null;renderModal();};
+  window.endNoteInput=val=>{noteVal=val;renderModal();};
+  window.endGetGPS=()=>{
+    gpsL=true;renderModal();
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const{latitude:lat,longitude:lng}=pos.coords;
+      toVal=await revGeo(lat,lng);toGpsVal={lat,lng};gpsL=false;
+      // estimate km
+      if(activeRide.fromGps&&activeRide.kmStart){
+        const{lat:la,lng:lo}=activeRide.fromGps;
+        const R=6371,dLat=(lat-la)*Math.PI/180,dLng=(lng-lo)*Math.PI/180;
+        const a2=Math.sin(dLat/2)**2+Math.cos(la*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLng/2)**2;
+        const dist=R*2*Math.atan2(Math.sqrt(a2),Math.sqrt(1-a2));
+        const road=Math.round(dist*1.3*1.05);
+        const base=parseFloat(activeRide.kmStart);
+        if(!isNaN(base)&&road>0)localKmSug=Math.round(base+road);
+      }
+      renderModal();showToast('📍 Poloha zaznamenána');
+    },()=>{gpsL=false;renderModal();showToast('GPS selhala');},{timeout:10000,enableHighAccuracy:true});
+  };
+  window.endAcceptKm=()=>{kmEndVal=String(localKmSug);localKmSug=null;renderModal();};
+  window.endFinish=async()=>{
+    if(!toVal){showToast('Vyplň kam');return;}
+    form.note=noteVal;
+    await finishRide(toVal,toGpsVal,kmEndVal);
+  };
+  window.endStop=async()=>{await addStop();};
+
+  renderModal();
+  // Auto GPS
+  setTimeout(()=>{if(window.endGetGPS)window.endGetGPS();},500);
+}
+
+function showFuelModal(){
+  let fDate=todayStr(),fKm='',fLiters='',fPricePer='',fPriceTotal='',fStation='',fNote='';
+  const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
+  fKm=lastKm;
+
+  function rm(){
+    document.getElementById('modals').innerHTML=`
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="position:relative;">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div class="modal-title">⛽ Tankování</div>
+        <div class="modal-sub">Zaznamenej tankování — údaje opíšeš z dokladu nebo tachometru</div>
+        <div class="fld"><div class="flbl">Datum</div><input type="date" value="${fDate}" oninput="fuelDate(this.value)" style="${inp}"></div>
+        <div class="fld"><div class="flbl">Čerpací stanice</div><input placeholder="např. Shell Doksany" value="${fStation}" oninput="fuelStation(this.value)" style="${inp}"></div>
+        <div class="fld"><div class="flbl">Stav KM (tachometr)</div><input type="number" placeholder="${lastKm||'42500'}" value="${fKm}" oninput="fuelKm(this.value)" style="${inp}"></div>
+        <div style="background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:10px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:12px;">Údaje z dokladu</div>
+          <div class="grid2">
+            <div class="fld"><div class="flbl">Litry</div><input type="number" step="0.01" placeholder="45.00" value="${fLiters}" oninput="fuelLiters(this.value)" style="${inp}"></div>
+            <div class="fld"><div class="flbl">Kč/litr</div><input type="number" step="0.01" placeholder="36.50" value="${fPricePer}" oninput="fuelPricePer(this.value)" style="${inp}"></div>
+          </div>
+          <div class="fld"><div class="flbl">Celková cena (Kč)</div><input type="number" step="0.01" placeholder="1642.50" value="${fPriceTotal}" oninput="fuelPriceTotal(this.value)" style="${inp}"></div>
+          ${fLiters&&fPricePer?`<div style="font-size:12px;color:var(--g);margin-top:4px;">Výpočet: ${(parseFloat(fLiters)*parseFloat(fPricePer)).toFixed(2)} Kč</div>`:''}
+        </div>
+        <div class="fld"><div class="flbl">Poznámka</div><input placeholder="Platba kartou, přívěs..." value="${fNote}" oninput="fuelNote(this.value)" style="${inp}"></div>
+        <button class="btn btn-bl" onclick="fuelSave()">⛽ Uložit tankování</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Zrušit</button>
+      </div>
+    </div>`;
+  }
+  const inp='width:100%;padding:11px 13px;background:var(--bg);border:1px solid var(--b);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;';
+  window.fuelDate=v=>{fDate=v;rm();};
+  window.fuelStation=v=>{fStation=v;rm();};
+  window.fuelKm=v=>{fKm=v;rm();};
+  window.fuelLiters=v=>{fLiters=v;rm();};
+  window.fuelPricePer=v=>{fPricePer=v;rm();};
+  window.fuelPriceTotal=v=>{fPriceTotal=v;rm();};
+  window.fuelNote=v=>{fNote=v;rm();};
+  window.fuelSave=async()=>{
+    const data={date:fDate,station:fStation,km:fKm,liters:fLiters,pricePer:fPricePer,priceTotal:fPriceTotal||((parseFloat(fLiters)*parseFloat(fPricePer))||'').toString(),note:fNote};
+    await saveFuel(data);
+  };
+  rm();
+}
+
+// ── URL ACTION ────────────────────────────────────────────────────────────────
+async function handleUrl(action){
   const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
   if(action==='start'){
     const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
-    resetForm(lastKm);setView('add');setTimeout(()=>getGPS('from'),600);showToast('🚗 Start — zaznamenávám polohu...');
+    resetForm(lastKm);setView('add');
+    setTimeout(()=>getGPS('from'),600);showToast('🚗 Start — zaznamenávám polohu...');
   }else if(action==='end'){
     const active=rides.find(r=>r.inProgress);
-    if(active)await openFinish(active.id);else{resetForm('');setView('add');showToast('Žádná aktivní jízda');}
+    if(active){setView('add');showEndModal(active);}
+    else{resetForm('');setView('add');showToast('Žádná aktivní jízda');}
   }
 }
 
-async function requestNotifications(){
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+async function reqNotif(){
   if(!('Notification' in window)){showToast('Notifikace nejsou podporovány');return;}
   const p=await Notification.requestPermission();
-  if(p==='granted'){await dbPut('meta',{key:'notif',value:'granted'});scheduleNotifs();showToast('✓ Notifikace povoleny');}
+  if(p==='granted'){await dbPut('meta',{key:'notif',value:'granted'});schedNotifs();showToast('✓ Notifikace povoleny');}
   render();
 }
-function scheduleNotifs(){[19,20,21].forEach(h=>{const t=new Date();t.setHours(h,0,0,0);if(t>new Date())setTimeout(()=>checkNotif(h),t-new Date());});}
-function checkNotif(h){const bad=rides.filter(r=>r.date===todayStr()&&(isIncomplete(r)||r.inProgress));if(bad.length>0&&Notification.permission==='granted')new Notification('Kniha jízd',{body:`${bad.length} jízda čeká na doplnění.`});const n=new Date();n.setDate(n.getDate()+1);n.setHours(h,0,0,0);setTimeout(()=>checkNotif(h),n-new Date());}
+function schedNotifs(){[19,20,21].forEach(h=>{const t=new Date();t.setHours(h,0,0,0);if(t>new Date())setTimeout(()=>chkNotif(h),t-new Date());});}
+function chkNotif(h){
+  const bad=rides.filter(r=>r.date===todayStr()&&(isInc(r)||r.inProgress));
+  if(bad.length>0&&Notification.permission==='granted')new Notification('Kniha jízd',{body:`${bad.length} jízda čeká na doplnění.`});
+  const n=new Date();n.setDate(n.getDate()+1);n.setHours(h,0,0,0);setTimeout(()=>chkNotif(h),n-new Date());
+}
 
-function setView(v){currentView=v;deleteConfirmId=null;document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+v)?.classList.add('active');render();}
+// ── VIEWS ─────────────────────────────────────────────────────────────────────
+function setView(v){cv=v;delId=null;document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));document.getElementById('nav-'+v)?.classList.add('on');render();}
+function render(){const c=document.getElementById('cnt');if(!c)return;if(cv==='add')c.innerHTML=renderAdd();else if(cv==='list')c.innerHTML=renderList();else if(cv==='stats')c.innerHTML=renderStats();else if(cv==='settings')c.innerHTML=renderSettings();}
 
-function render(){const c=document.getElementById('content');if(!c)return;if(currentView==='add')c.innerHTML=renderAdd();else if(currentView==='list')c.innerHTML=renderList();else if(currentView==='stats')c.innerHTML=renderStats();else if(currentView==='settings')c.innerHTML=renderSettings();}
-
+// ── ADD VIEW ──────────────────────────────────────────────────────────────────
 function renderAdd(){
   const activeRide=rides.find(r=>r.inProgress);
-  const isEndMode=editId!==null&&activeRide&&activeRide.id===editId;
+  const isEnd=editId!==null&&activeRide&&activeRide.id===editId;
   const km=kmDiff(form.kmStart,form.kmEnd);
   const lastKmEnd=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||null;
-  const showKmPrefill=!form.kmStart&&lastKmEnd;
-  const incompleteToday=rides.filter(r=>r.date===todayStr()&&isIncomplete(r));
-  let badgeHtml='',actionBtn='';
-  if(isEndMode){badgeHtml=`<div class="mode-badge badge-end">🏁 Ukončení jízdy</div>`;actionBtn=`<button class="btn btn-orange" onclick="finishRide()">${savedFlash?'✓ Uloženo':'🏁 Dokončit jízdu'}</button>`;}
-  else if(editId){badgeHtml=`<div class="mode-badge badge-edit">✏ Úprava záznamu</div>`;actionBtn=`<button class="btn btn-yellow" onclick="saveFullRide()">${savedFlash?'✓ Uloženo':'Uložit změny'}</button>`;}
-  else{badgeHtml=`<div class="mode-badge badge-start">🚗 Nová jízda</div>`;actionBtn=`<button class="btn btn-orange" onclick="startRide()">🚗 Zahájit jízdu (bez příjezdu)</button><button class="btn btn-yellow" onclick="saveFullRide()" style="margin-top:8px;">${savedFlash?'✓ Uloženo':'✓ Zapsat celou jízdu'}</button>`;}
+  const showKmPre=!form.kmStart&&lastKmEnd;
+  const incToday=rides.filter(r=>r.date===todayStr()&&isInc(r));
+
+  let badge='',actionBtn='';
+  if(isEnd){badge=`<div class="badge badge-e">🏁 Ukončení jízdy</div>`;actionBtn=`<button class="btn btn-o" onclick="showEndModal(rides.find(r=>r.id===editId))">${flash?'✓ Uloženo':'🏁 Otevřít ukončení'}</button>`;}
+  else if(editId){badge=`<div class="badge badge-ed">✏ Úprava záznamu</div>`;actionBtn=`<button class="btn btn-y" onclick="saveFullRide()">${flash?'✓ Uloženo':'Uložit změny'}</button>`;}
+  else{badge=`<div class="badge badge-s">🚗 Nová jízda</div>`;actionBtn=`
+    <button class="btn btn-o" onclick="startRide()">🚗 Zahájit jízdu (bez příjezdu)</button>
+    <button class="btn btn-y" onclick="saveFullRide()" style="margin-top:8px;">${flash?'✓ Uloženo':'✓ Zapsat celou jízdu'}</button>
+    <button class="btn btn-bl" onclick="showFuelModal()" style="margin-top:8px;">⛽ Zaznamenat tankování</button>
+  `;}
+
   return`
-    ${activeRide&&!isEndMode?`<div class="active-trip-banner"><div class="active-trip-label">🚗 Probíhající jízda</div><div class="active-trip-route">${activeRide.from} → ...</div><div class="active-trip-meta">${activeRide.driver} · ${fmtDate(activeRide.date)} ${activeRide.time||''}<br>${activeRide.purpose||'<span style="color:var(--orange)">účel nevyplněn</span>'}${activeRide.kmStart?' · start: '+activeRide.kmStart+' km':''}</div><button class="btn btn-orange" style="margin-top:12px;" onclick="openFinish(${activeRide.id})">🏁 Dokončit tuto jízdu</button></div>`:''}
-    ${incompleteToday.length>0?`<div class="incomplete-banner" onclick="setView('list')"><span style="flex:1;font-size:13px;color:var(--red);">Dnešní neúplné záznamy</span><span style="font-family:var(--mono);font-size:20px;color:var(--red);">${incompleteToday.length}</span></div>`:''}
-    ${badgeHtml}
-    <div class="field"><div class="field-label">Datum</div><input type="date" value="${form.date}" onchange="form.date=this.value"></div>
-    <div class="field"><div class="field-label">Čas odjezdu</div><input type="time" value="${form.time}" onchange="form.time=this.value"></div>
-    <div class="field"><div class="field-label">Řidič</div><div class="driver-toggle">${DRIVERS.map(d=>`<button class="driver-btn ${form.driver===d?'active':''}" onclick="form.driver='${d}';render()">${d}</button>`).join('')}</div></div>
-    <div class="field"><div class="field-label">Odkud</div><div class="gps-row"><input placeholder="Adresa odjezdu" value="${form.from}" oninput="form.from=this.value"><button class="gps-btn ${gpsFromLoading?'loading':form.fromGps?'done':''}" onclick="getGPS('from')">${gpsFromLoading?'⟳':form.fromGps?'✓ GPS':'📍 GPS'}</button></div></div>
-    <div class="field"><div class="field-label">Kam</div><div class="gps-row"><input placeholder="Adresa příjezdu" value="${form.to}" oninput="form.to=this.value;kmSuggestion=null;"><button class="gps-btn ${gpsToLoading?'loading':form.toGps?'done':''}" onclick="getGPS('to')">${gpsToLoading?'⟳':form.toGps?'✓ GPS':'📍 GPS'}</button></div></div>
-    <div class="field"><div class="field-label">Účel jízdy</div><select onchange="form.purpose=this.value;render()"><option value="">— vyber účel —</option>${PURPOSES.map(p=>`<option value="${p}" ${form.purpose===p?'selected':''}>${p}</option>`).join('')}</select></div>
-    ${form.purpose==='Jiné'?`<div class="field"><div class="field-label">Upřesni účel</div><input placeholder="Popiš účel..." value="${form.purposeCustom}" oninput="form.purposeCustom=this.value"></div>`:''}
-    <div class="field"><div class="field-label">Poznámka (volitelné)</div><input placeholder="Jméno klienta, agenda..." value="${form.note}" oninput="form.note=this.value"></div>
-    <div class="grid2">
-      <div class="field"><div class="field-label">KM — odjezd</div><input type="number" placeholder="${lastKmEnd||'42500'}" value="${form.kmStart}" oninput="form.kmStart=this.value;kmSuggestion=null;render()"></div>
-      <div class="field"><div class="field-label">KM — příjezd</div><input type="number" placeholder="42580" value="${form.kmEnd}" oninput="form.kmEnd=this.value;render()"></div>
+    ${activeRide&&!isEnd?`<div class="act-banner"><div class="act-lbl">🚗 Probíhající jízda</div><div class="act-route">${activeRide.from} → ...</div><div class="act-meta">${activeRide.driver} · ${fmtD(activeRide.date)} ${activeRide.time||''}<br>${activeRide.purpose||'<span style="color:var(--o)">účel nevyplněn</span>'}${activeRide.kmStart?' · start: '+activeRide.kmStart+' km':''}</div><div class="btn-row" style="margin-top:12px;"><button class="btn btn-o" style="margin-top:0;" onclick="showEndModal(rides.find(r=>r.inProgress))">🏁 Ukončit jízdu</button><button class="btn btn-pu" style="margin-top:0;" onclick="showFuelModal()">⛽ Tankování</button></div></div>`:''}
+    ${incToday.length>0?`<div class="inc-banner" onclick="setView('list')"><span style="flex:1;font-size:13px;color:var(--r);">Dnešní neúplné záznamy</span><span style="font-family:var(--mono);font-size:20px;color:var(--r);">${incToday.length}</span></div>`:''}
+    ${badge}
+    <div class="fld"><div class="flbl">Datum</div><input type="date" value="${form.date}" onchange="form.date=this.value;saveFormLS()"></div>
+    <div class="fld"><div class="flbl">Čas odjezdu</div><input type="time" value="${form.time}" onchange="form.time=this.value;saveFormLS()"></div>
+    <div class="fld"><div class="flbl">Řidič</div><div class="drv-tog">${DRIVERS.map(d=>`<button class="drv-btn ${form.driver===d?'on':''}" onclick="form.driver='${d}';saveFormLS();render()">${d}</button>`).join('')}</div></div>
+    <div class="fld">
+      <div class="flbl">Odkud</div>
+      <div class="gps-row">
+        <div class="fld" style="margin-bottom:0;flex:1;position:relative;">
+          <input placeholder="Začni psát adresu..." value="${form.from}" oninput="onFromInput(this.value)"
+            style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;">
+          ${acFromResults.length>0?`<div class="ac-list">${acFromResults.map((x,i)=>`<div class="ac-item" onclick="pickFrom('${x.name.replace(/'/g,"\\'")}','${x.full.replace(/'/g,"\\'")}')"><div class="ac-name">${x.name}</div><div class="ac-addr">${x.full}</div></div>`).join('')}</div>`:''}
+        </div>
+        <button class="gps-btn ${gpsFL?'load':form.fromGps?'done':''}" onclick="getGPS('from')">${gpsFL?'⟳':form.fromGps?'✓ GPS':'📍 GPS'}</button>
+      </div>
     </div>
-    ${showKmPrefill?`<div class="suggestion-box blue"><div class="suggestion-text">Poslední příjezd: <strong>${lastKmEnd} km</strong> — použít jako start?</div><button class="suggestion-btn" onclick="form.kmStart='${lastKmEnd}';render()">Použít</button></div>`:''}
-    ${kmSuggestion!==null&&!form.kmEnd?`<div class="suggestion-box green"><div class="suggestion-text green">Odhadovaný příjezd (GPS +5%): <strong>${kmSuggestion} km</strong></div><button class="suggestion-btn green" onclick="form.kmEnd='${kmSuggestion}';kmSuggestion=null;render()">Použít</button></div>`:''}
-    ${km!==null?`<div class="km-diff"><span class="km-diff-label">Vzdálenost jízdy</span><span class="km-diff-val">${km} km</span></div>`:''}
+    <div class="fld">
+      <div class="flbl">Kam</div>
+      <div class="gps-row">
+        <div class="fld" style="margin-bottom:0;flex:1;position:relative;">
+          <input placeholder="Začni psát adresu..." value="${form.to}" oninput="onToInput(this.value)"
+            style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;">
+          ${acToResults.length>0?`<div class="ac-list">${acToResults.map((x,i)=>`<div class="ac-item" onclick="pickTo('${x.name.replace(/'/g,"\\'")}','${x.full.replace(/'/g,"\\'")}')"><div class="ac-name">${x.name}</div><div class="ac-addr">${x.full}</div></div>`).join('')}</div>`:''}
+        </div>
+        <button class="gps-btn ${gpsToL?'load':form.toGps?'done':''}" onclick="getGPS('to')">${gpsToL?'⟳':form.toGps?'✓ GPS':'📍 GPS'}</button>
+      </div>
+    </div>
+    <div class="fld"><div class="flbl">Účel jízdy</div><select onchange="form.purpose=this.value;saveFormLS();render()"><option value="">— vyber účel —</option>${PURPOSES.map(p=>`<option value="${p}" ${form.purpose===p?'selected':''}>${p}</option>`).join('')}</select></div>
+    ${form.purpose==='Jiné'?`<div class="fld"><div class="flbl">Upřesni účel</div><input placeholder="Popiš účel..." value="${form.purposeCustom}" oninput="form.purposeCustom=this.value;saveFormLS()"></div>`:''}
+    <div class="fld"><div class="flbl">Poznámka (volitelné)</div><input placeholder="Jméno klienta, agenda..." value="${form.note}" oninput="form.note=this.value;saveFormLS()"></div>
+    <div class="grid2">
+      <div class="fld"><div class="flbl">KM — odjezd</div><input type="number" placeholder="${lastKmEnd||'42500'}" value="${form.kmStart}" oninput="form.kmStart=this.value;saveFormLS();kmSug=null;render()"></div>
+      <div class="fld"><div class="flbl">KM — příjezd</div><input type="number" placeholder="42580" value="${form.kmEnd}" oninput="form.kmEnd=this.value;render()"></div>
+    </div>
+    ${showKmPre?`<div class="sug blue"><div class="sug-txt">Poslední příjezd: <strong>${lastKmEnd} km</strong> — použít jako start?</div><button class="sug-btn" onclick="form.kmStart='${lastKmEnd}';saveFormLS();render()">Použít</button></div>`:''}
+    ${kmSug!==null&&!form.kmEnd?`<div class="sug green"><div class="sug-txt green">Odhadovaný příjezd (GPS +5%): <strong>${kmSug} km</strong></div><button class="sug-btn green" onclick="form.kmEnd='${kmSug}';kmSug=null;render()">Použít</button></div>`:''}
+    ${km!==null?`<div class="kmd"><span class="kmd-lbl">Vzdálenost jízdy</span><span class="kmd-val">${km} km</span></div>`:''}
     ${actionBtn}
     ${editId!==null?`<button class="btn btn-ghost" onclick="editId=null;resetForm('');render()">Zrušit editaci</button>`:''}
   `;
 }
 
+// ── LIST VIEW ─────────────────────────────────────────────────────────────────
 function renderList(){
-  const src=filterDriver==='all'?rides:rides.filter(r=>r.driver===filterDriver);
-  const done=src.filter(r=>!r.inProgress);
-  const totalKm=done.reduce((a,r)=>a+(r.km||0),0);
+  const allItems=[
+    ...rides.map(r=>({...r,_type:'ride'})),
+    ...fuels.map(f=>({...f,_type:'fuel',date:f.date||todayStr()}))
+  ].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  const src=fDriver==='all'?allItems:allItems.filter(x=>x._type==='fuel'||x.driver===fDriver);
+  const doneRides=src.filter(x=>x._type==='ride'&&!x.inProgress);
+  const totalKm=doneRides.reduce((a,r)=>a+(r.km||0),0);
   return`
-    <div class="filter-row">${['all',...DRIVERS].map(d=>`<button class="filter-btn ${filterDriver===d?'active':''}" onclick="filterDriver='${d}';render()">${d==='all'?'Všichni':d}</button>`).join('')}<button class="export-btn" onclick="exportCSV()">↓ CSV</button></div>
-    ${src.length>0?`<div class="records-meta"><span>${done.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
-    ${src.length===0?`<div class="empty-state">Žádné záznamy</div>`:src.map(r=>`
-      <div class="record-card ${r.inProgress?'in-progress':isIncomplete(r)?'incomplete':''}">
-        <div class="rec-top">
-          <div style="flex:1;min-width:0;">
-            <div class="rec-meta"><span class="rec-date">${fmtDate(r.date)}${r.time?' '+r.time:''}</span><span class="rec-driver ${r.driver==='David'?'driver-d':'driver-m'}">${r.driver}</span>${r.inProgress?'<span style="font-size:9px;color:var(--orange);background:rgba(251,146,60,0.1);padding:2px 8px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div>
-            <div class="rec-route">${r.from||'?'} → ${r.to||'...'}</div>
-            <div class="rec-purpose">${r.purpose||'<span style="color:var(--red)">Účel chybí</span>'}</div>
-            ${r.note?`<div class="rec-note">${r.note}</div>`:''}
-            ${r.inProgress?`<div class="rec-badge" style="color:var(--orange);">⏳ Probíhá — chybí příjezd</div>`:''}
-            ${isIncomplete(r)?`<div class="rec-badge" style="color:var(--red);">⚠ Chybí: ${[!r.purpose&&'účel',!r.kmStart&&'KM start',!r.kmEnd&&'KM konec'].filter(Boolean).join(', ')}</div>`:''}
+    <div class="frow">${['all',...DRIVERS].map(d=>`<button class="fbtn ${fDriver===d?'on':''}" onclick="fDriver='${d}';render()">${d==='all'?'Všichni':d}</button>`).join('')}<button class="exp-btn" onclick="exportCSV()">↓ CSV</button></div>
+    ${src.length>0?`<div class="rec-meta-row"><span>${doneRides.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
+    ${src.length===0?`<div class="empty">Žádné záznamy</div>`:src.map(item=>{
+      if(item._type==='fuel')return`
+        <div class="card fuel">
+          <div class="card-top">
+            <div style="flex:1;min-width:0;">
+              <div class="cmeta"><span class="cdate">${fmtD(item.date)}</span><span style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽ TANKOVÁNÍ</span></div>
+              <div class="croute">${item.station||'Čerpací stanice'}</div>
+              ${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+              ${item.liters?`<div class="ckm">${item.liters}</div><div class="ckm-lbl">litrů</div>`:''}
+              ${item.priceTotal?`<div style="font-family:var(--mono);font-size:14px;color:var(--bl);margin-top:4px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ')} Kč</div>`:''}
+            </div>
           </div>
-          <div style="flex-shrink:0;margin-left:12px;text-align:right;">${r.km!=null?`<div class="rec-km">${r.km}</div><div class="rec-km-label">km</div>`:'<div style="color:var(--muted);font-size:12px;">—</div>'}</div>
-        </div>
-        <div class="rec-actions">${r.inProgress?`<button class="action-btn finish" onclick="openFinish(${r.id})">🏁 Dokončit</button>`:''}<button class="action-btn" onclick="editRide(${r.id})">✏ Upravit</button><button class="action-btn del" onclick="deleteConfirmId=${r.id};render()">🗑</button></div>
-        ${deleteConfirmId===r.id?`<div class="del-confirm"><span>Smazat tento záznam?</span><button class="action-btn del" onclick="deleteRide(${r.id})">Smazat</button><button class="action-btn" onclick="deleteConfirmId=null;render()">Zrušit</button></div>`:''}
-      </div>`).join('')}
+          ${item.pricePer?`<div style="font-size:11px;color:var(--m2);margin-top:4px;">${item.pricePer} Kč/l</div>`:''}
+          <div class="cact"><button class="abtn del" onclick="if(confirm('Smazat?'))delFuel(${item.id})">🗑</button></div>
+        </div>`;
+      return`
+        <div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}">
+          <div class="card-top">
+            <div style="flex:1;min-width:0;">
+              <div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 8px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div>
+              <div class="croute">${item.from||'?'} → ${item.to||'...'}</div>
+              <div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>
+              ${item.note?`<div class="cnote">${item.note}</div>`:''}
+              ${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá — chybí příjezd</div>`:''}
+              ${isInc(item)?`<div class="cbadge" style="color:var(--r);">⚠ Chybí: ${[!item.purpose&&'účel',!item.kmStart&&'KM start',!item.kmEnd&&'KM konec'].filter(Boolean).join(', ')}</div>`:''}
+            </div>
+            <div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="ckm-lbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div>
+          </div>
+          <div class="cact">${item.inProgress?`<button class="abtn fin" onclick="setView('add');showEndModal(rides.find(r=>r.id===${item.id}))">🏁 Ukončit</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏ Upravit</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>
+          ${delId===item.id?`<div class="del-cf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}
+        </div>`;
+    }).join('')}
   `;
 }
 
+// ── STATS VIEW ────────────────────────────────────────────────────────────────
 function renderStats(){
   const done=rides.filter(r=>!r.inProgress);
   const total=done.reduce((a,r)=>a+(r.km||0),0);
-  const byDriver=DRIVERS.map(d=>({name:d,count:done.filter(r=>r.driver===d).length,km:done.filter(r=>r.driver===d).reduce((a,r)=>a+(r.km||0),0)}));
+  const byD=DRIVERS.map(d=>({name:d,count:done.filter(r=>r.driver===d).length,km:done.filter(r=>r.driver===d).reduce((a,r)=>a+(r.km||0),0)}));
   const pm={};done.forEach(r=>{if(!r.purpose)return;if(!pm[r.purpose])pm[r.purpose]={count:0,km:0};pm[r.purpose].count++;pm[r.purpose].km+=(r.km||0);});
   const byP=Object.entries(pm).map(([n,v])=>({name:n,...v})).sort((a,b)=>b.km-a.km);
-  const inc=rides.filter(isIncomplete).length,prog=rides.filter(r=>r.inProgress).length;
+  const inc=rides.filter(isInc).length,prog=rides.filter(r=>r.inProgress).length;
+  const totalFuel=fuels.reduce((a,f)=>a+(parseFloat(f.priceTotal)||0),0);
+  const totalLiters=fuels.reduce((a,f)=>a+(parseFloat(f.liters)||0),0);
   return`
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-val">${done.length}</div><div class="stat-label">Jízdy</div></div>
-      <div class="stat-card"><div class="stat-val">${total.toLocaleString('cs-CZ')}</div><div class="stat-label">KM celkem</div></div>
-      ${prog>0?`<div class="stat-card" style="border-color:rgba(251,146,60,0.3);"><div class="stat-val" style="color:var(--orange);">${prog}</div><div class="stat-label">Aktivní</div></div>`:''}
-      ${inc>0?`<div class="stat-card" style="border-color:rgba(248,113,113,0.3);"><div class="stat-val" style="color:var(--red);font-size:22px;">${inc}</div><div class="stat-label">Neúplné</div></div>`:`<div class="stat-card" style="border-color:rgba(74,222,128,0.2);"><div class="stat-val" style="color:var(--green);font-size:20px;">✓</div><div class="stat-label">Vše OK</div></div>`}
+    <div class="sg">
+      <div class="sc"><div class="sv">${done.length}</div><div class="slbl">Jízdy</div></div>
+      <div class="sc"><div class="sv">${total.toLocaleString('cs-CZ')}</div><div class="slbl">KM celkem</div></div>
+      ${fuels.length>0?`<div class="sc" style="border-color:rgba(96,165,250,.2);"><div class="sv" style="color:var(--bl);font-size:20px;">${totalLiters.toFixed(1)}</div><div class="slbl">Litrů natankováno</div></div>`:''}
+      ${fuels.length>0?`<div class="sc" style="border-color:rgba(96,165,250,.2);"><div class="sv" style="color:var(--bl);font-size:20px;">${Math.round(totalFuel).toLocaleString('cs-CZ')}</div><div class="slbl">Kč za naftu</div></div>`:''}
+      ${prog>0?`<div class="sc" style="border-color:rgba(251,146,60,.3);"><div class="sv" style="color:var(--o);">${prog}</div><div class="slbl">Aktivní</div></div>`:''}
+      ${inc>0?`<div class="sc" style="border-color:rgba(248,113,113,.3);"><div class="sv" style="color:var(--r);font-size:22px;">${inc}</div><div class="slbl">Neúplné</div></div>`:`<div class="sc" style="border-color:rgba(74,222,128,.2);"><div class="sv" style="color:var(--g);font-size:20px;">✓</div><div class="slbl">Vše OK</div></div>`}
     </div>
-    <div class="section-title">Podle řidiče</div>
-    ${byDriver.map(d=>`<div class="stat-row"><div><div class="stat-row-name">${d.name}</div><div class="stat-row-sub">${d.count} jízd</div></div><div class="stat-row-km">${d.km.toLocaleString('cs-CZ')} km</div></div>`).join('')}
-    ${byP.length>0?`<div class="section-title">Podle účelu</div>${byP.map(p=>`<div class="stat-row"><div style="flex:1;min-width:0;"><div class="stat-row-name">${p.name}</div><div class="stat-row-sub">${p.count}×</div></div><div class="stat-row-km">${p.km} km</div></div>`).join('')}`:''}
+    <div class="stitle">Podle řidiče</div>
+    ${byD.map(d=>`<div class="sr"><div><div class="srn">${d.name}</div><div class="srs">${d.count} jízd</div></div><div class="srk">${d.km.toLocaleString('cs-CZ')} km</div></div>`).join('')}
+    ${byP.length>0?`<div class="stitle">Podle účelu</div>${byP.map(p=>`<div class="sr"><div style="flex:1;min-width:0;"><div class="srn">${p.name}</div><div class="srs">${p.count}×</div></div><div class="srk">${p.km} km</div></div>`).join('')}`:''}
   `;
 }
 
+// ── SETTINGS VIEW ─────────────────────────────────────────────────────────────
 function renderSettings(){
   const perm=typeof Notification!=='undefined'?Notification.permission:'default';
   return`
-    <div class="info-card">
-      <div class="info-card-title">🔔 Večerní upomínky</div>
-      <div class="info-card-body">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>
-      ${perm==='granted'?`<button class="notif-btn enabled">✓ Povoleno</button>`:perm==='denied'?`<button class="notif-btn denied-state">Blokováno — povol v Nastavení Safari</button>`:`<button class="notif-btn enable" onclick="requestNotifications()">Povolit notifikace</button>`}
-    </div>
-    <div class="info-card">
-      <div class="info-card-title">🚗 CarPlay automatizace</div>
-      <div class="info-card-body"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:10px;">Odpojení:</strong><code class="orange">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div>
-    </div>
-    <div class="info-card">
-      <div class="info-card-title">📱 Přidat na plochu</div>
-      <div class="info-card-body">Safari → Sdílet → <strong>Přidat na plochu</strong></div>
-    </div>
-    <div class="info-card" style="border-color:rgba(74,222,128,0.15);">
-      <div class="info-card-title">💾 Úložiště</div>
-      <div class="info-card-body">Data jsou v IndexedDB — pouze v tvém telefonu. Záloha přes ↓ CSV v záznamu.</div>
-    </div>
+    <div class="ic"><div class="ict">🔔 Večerní upomínky</div><div class="icb">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>${perm==='granted'?`<button class="nbt ok">✓ Povoleno</button>`:perm==='denied'?`<button class="nbt no">Blokováno — povol v Nastavení Safari</button>`:`<button class="nbt en" onclick="reqNotif()">Povolit notifikace</button>`}</div>
+    <div class="ic"><div class="ict">🚗 CarPlay automatizace</div><div class="icb"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:10px;">Odpojení:</strong><code class="o">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div></div>
+    <div class="ic"><div class="ict">📱 Přidat na plochu</div><div class="icb">Safari → Sdílet → <strong>Přidat na plochu</strong></div></div>
+    <div class="ic" style="border-color:rgba(74,222,128,.15);"><div class="ict">💾 Úložiště</div><div class="icb">Data jsou v IndexedDB — pouze v tvém telefonu. Záloha přes ↓ CSV v záznamu.</div></div>
   `;
 }
 
+// ── INIT ──────────────────────────────────────────────────────────────────────
 async function init(){
   await openDB();await reload();
   const ar=await dbGet('meta','activeRideId');activeRideId=ar?.value||null;
   const ns=await dbGet('meta','notif');
-  if(ns?.value==='granted'&&typeof Notification!=='undefined'&&Notification.permission==='granted')scheduleNotifs();
+  if(ns?.value==='granted'&&typeof Notification!=='undefined'&&Notification.permission==='granted')schedNotifs();
   const action=new URLSearchParams(window.location.search).get('action');
-  if(action){await handleUrlAction(action);}
+  if(action){await handleUrl(action);}
   else{const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';resetForm(lastKm);}
   updateTotal();render();
 }
