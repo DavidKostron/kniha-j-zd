@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kniha jízd">
+<title>Kniha jízd</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080a0f;
+    --surface: #0f1218;
+    --surface2: #161b24;
+    --border: #1e2535;
+    --border2: #252e40;
+    --text: #dde4f0;
+    --muted: #4a5570;
+    --muted2: #6a7590;
+    --accent: #e8c547;
+    --accent2: #f0d870;
+    --green: #4ade80;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --font: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
+
+  /* LAYOUT */
+  #app { min-height: 100vh; display: flex; flex-direction: column; }
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 0;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .logo { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+  .total-km { font-family: var(--mono); font-size: 30px; font-weight: 300; color: var(--accent); line-height: 1; }
+  .total-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; text-align: right; margin-top: 2px; }
+
+  .nav { display: flex; gap: 0; border-top: 1px solid var(--border); margin: 0 -20px; }
+  .nav-btn {
+    flex: 1; padding: 12px 4px; background: none; border: none; color: var(--muted);
+    font-family: var(--font); font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .content { flex: 1; padding: 20px 16px 100px; max-width: 640px; margin: 0 auto; width: 100%; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); border: 1px solid var(--border2);
+    padding: 10px 20px; border-radius: 30px; font-size: 13px; color: var(--text);
+    opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* FIELDS */
+  .field { margin-bottom: 14px; }
+  .field-label { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 11px 13px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 14px;
+    outline: none; transition: border-color 0.15s; appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 32px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* DRIVER TOGGLE */
+  .driver-toggle { display: flex; gap: 8px; }
+  .driver-btn {
+    flex: 1; padding: 11px; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; color: var(--muted2); font-family: var(--font); font-size: 13px;
+    font-weight: 500; cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .driver-btn.active { background: rgba(232,197,71,0.1); border-color: var(--accent); color: var(--accent); }
+
+  /* GPS BUTTON */
+  .gps-btn {
+    width: 100%; padding: 11px; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; color: var(--muted2); font-family: var(--font); font-size: 13px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.2s;
+  }
+  .gps-btn:active { transform: scale(0.98); }
+  .gps-btn.loading { color: var(--accent); border-color: var(--accent); animation: pulse 1s infinite; }
+  .gps-btn.done { color: var(--green); border-color: var(--green); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* KM DIFF */
+  .km-diff {
+    background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 8px; padding: 10px 14px; display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 14px;
+  }
+  .km-diff-label { font-size: 11px; color: var(--muted2); }
+  .km-diff-val { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--green); }
+
+  /* SUBMIT BTN */
+  .submit-btn {
+    width: 100%; padding: 15px; background: var(--accent); color: var(--bg);
+    border: none; border-radius: 10px; font-family: var(--font); font-size: 15px;
+    font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s;
+    margin-top: 6px;
+  }
+  .submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+  .submit-btn.saved { background: rgba(74,222,128,0.15); color: var(--green); }
+  .cancel-btn {
+    width: 100%; padding: 12px; background: transparent; color: var(--muted);
+    border: 1px solid var(--border2); border-radius: 10px; font-family: var(--font);
+    font-size: 13px; cursor: pointer; margin-top: 8px;
+  }
+
+  /* RECORDS */
+  .filter-row { display: flex; gap: 6px; margin-bottom: 16px; align-items: center; }
+  .filter-btn {
+    padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 20px; color: var(--muted2); font-family: var(--font); font-size: 11px;
+    font-weight: 500; cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn.active { background: rgba(232,197,71,0.1); border-color: var(--accent); color: var(--accent); }
+  .export-btn {
+    margin-left: auto; padding: 6px 12px; background: var(--surface2);
+    border: 1px solid var(--border2); border-radius: 20px; color: var(--muted2);
+    font-family: var(--font); font-size: 11px; cursor: pointer;
+  }
+
+  .records-summary { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+  .records-summary span:last-child { font-family: var(--mono); color: var(--accent); }
+
+  .record-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    transition: border-color 0.15s;
+  }
+  .record-card.incomplete { border-left: 3px solid var(--red); }
+  .record-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .record-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .record-date { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
+  .record-driver {
+    font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .driver-d { background: rgba(96,165,250,0.1); color: var(--blue); }
+  .driver-m { background: rgba(167,139,250,0.1); color: #a78bfa; }
+  .record-route { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .record-purpose { font-size: 12px; color: var(--muted2); }
+  .record-note { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .record-km { font-family: var(--mono); font-size: 20px; font-weight: 400; color: var(--accent); }
+  .record-km-label { font-size: 9px; color: var(--muted); text-align: right; }
+  .record-incomplete-badge { font-size: 10px; color: var(--red); margin-top: 6px; }
+  .record-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+  .action-btn {
+    padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; color: var(--muted2); font-size: 11px; cursor: pointer;
+    font-family: var(--font);
+  }
+  .action-btn.del { color: var(--red); border-color: rgba(248,113,113,0.2); }
+  .delete-confirm {
+    margin-top: 10px; padding: 10px 12px;
+    background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 8px; display: flex; gap: 8px; align-items: center;
+  }
+  .delete-confirm span { flex: 1; font-size: 12px; color: var(--red); }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; text-align: center;
+  }
+  .stat-val { font-family: var(--mono); font-size: 28px; font-weight: 300; color: var(--accent); }
+  .stat-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+  .section-title { font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+  .stat-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .stat-row-name { font-size: 13px; color: var(--muted2); }
+  .stat-row-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .stat-row-km { font-family: var(--mono); font-size: 16px; color: var(--accent); }
+
+  /* NOTIF SETTINGS */
+  .notif-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  }
+  .notif-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .notif-sub { font-size: 11px; color: var(--muted2); margin-bottom: 14px; }
+  .notif-btn {
+    width: 100%; padding: 12px; border: 1px solid var(--border2);
+    border-radius: 8px; font-family: var(--font); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .notif-btn.enable { background: rgba(232,197,71,0.1); border-color: var(--accent); color: var(--accent); }
+  .notif-btn.enabled { background: rgba(74,222,128,0.1); border-color: var(--green); color: var(--green); }
+  .notif-btn.disabled-state { background: var(--surface2); color: var(--muted); }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px; }
+
+  /* SECTION DIVIDER */
+  .section-divider { margin: 20px 0 16px; }
+
+  /* INCOMPLETE BANNER */
+  .incomplete-banner {
+    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .incomplete-banner-text { flex: 1; font-size: 13px; color: var(--red); }
+  .incomplete-banner-count { font-family: var(--mono); font-size: 20px; color: var(--red); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo">KS — Firemní vozidlo</div>
+        <div style="font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-top:4px;">Kniha jízd</div>
+      </div>
+      <div>
+        <div class="total-km" id="totalKm">0</div>
+        <div class="total-label">km celkem</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="setView('add')" id="nav-add">＋ Přidat</button>
+      <button class="nav-btn" onclick="setView('list')" id="nav-list">Záznamy</button>
+      <button class="nav-btn" onclick="setView('stats')" id="nav-stats">Přehled</button>
+      <button class="nav-btn" onclick="setView('settings')" id="nav-settings">⚙ Notif.</button>
+    </nav>
+  </div>
+
+  <div class="content" id="content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DB ───────────────────────────────────────────────────────────────────────
+let db;
+const DB_NAME = 'kniha_jizd', DB_VER = 1;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('rides')) {
+        const s = d.createObjectStore('rides', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('date', 'date');
+      }
+      if (!d.objectStoreNames.contains('settings')) {
+        d.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbPut(store, obj) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbDelete(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(key);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let rides = [];
+let currentView = 'add';
+let editId = null;
+let deleteConfirmId = null;
+let filterDriver = 'all';
+let notifPermission = 'default';
+let savedFlash = false;
+
+const DRIVERS = ['David', 'Manželka'];
+const PURPOSES = [
+  'Schůzka s investorem',
+  'Schůzka s klientem',
+  'Showroom Doksany',
+  'Kontrola zaměstnance',
+  'Freediving / partnerská akce',
+  'Spolupráce s e-shopem / firmou',
+  'Focení / Instagram',
+  'FreeHeating – obchodní jednání',
+  'Administrativa / účetní',
+  'Jiné',
+];
+
+let form = freshForm();
+function freshForm() {
+  return {
+    date: today(),
+    driver: 'David',
+    from: '',
+    fromGps: null,
+    to: '',
+    toGps: null,
+    purpose: '',
+    purposeCustom: '',
+    kmStart: '',
+    kmEnd: '',
+    note: '',
+  };
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ─── GPS ──────────────────────────────────────────────────────────────────────
+let gpsFromLoading = false, gpsToLoading = false;
+
+async function getGPS(field) {
+  if (!navigator.geolocation) { showToast('GPS není dostupná'); return; }
+  if (field === 'from') gpsFromLoading = true;
+  else gpsToLoading = true;
+  render();
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lng } = pos.coords;
+    const addr = await reverseGeocode(lat, lng);
+    if (field === 'from') {
+      form.from = addr;
+      form.fromGps = { lat, lng };
+      gpsFromLoading = false;
+    } else {
+      form.to = addr;
+      form.toGps = { lat, lng };
+      gpsToLoading = false;
+    }
+    render();
+    showToast('📍 Poloha zaznamenána');
+  }, err => {
+    if (field === 'from') gpsFromLoading = false;
+    else gpsToLoading = false;
+    render();
+    showToast('GPS selhala — zadej adresu ručně');
+  }, { timeout: 10000, enableHighAccuracy: true });
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+    const d = await r.json();
+    const a = d.address;
+    const parts = [a.road, a.house_number, a.city || a.town || a.village].filter(Boolean);
+    return parts.join(' ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch {
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+async function requestNotifications() {
+  if (!('Notification' in window)) { showToast('Notifikace nejsou podporovány'); return; }
+  const perm = await Notification.requestPermission();
+  notifPermission = perm;
+  if (perm === 'granted') {
+    await dbPut('settings', { key: 'notif', value: 'granted' });
+    scheduleNotifications();
+    showToast('✓ Notifikace povoleny');
+  }
+  render();
+}
+
+function scheduleNotifications() {
+  // Clear existing
+  const ids = [1001, 1002, 1003];
+  // We use setTimeout to schedule for today's 19, 20, 21
+  const times = [19, 20, 21];
+  times.forEach(h => {
+    const now = new Date();
+    const target = new Date();
+    target.setHours(h, 0, 0, 0);
+    if (target > now) {
+      const ms = target - now;
+      setTimeout(() => checkAndNotify(h), ms);
+    }
+  });
+}
+
+async function checkAndNotify(hour) {
+  const todayStr = today();
+  const incomplete = rides.filter(r =>
+    r.date === todayStr && (!r.purpose || !r.kmStart || !r.kmEnd || !r.from || !r.to)
+  );
+  if (incomplete.length > 0 && Notification.permission === 'granted') {
+    new Notification('Kniha jízd', {
+      body: `Máš ${incomplete.length} nezaznamenanou jízdu — doplň chybějící údaje.`,
+      icon: '🚗',
+    });
+  }
+  // Schedule next day same hour
+  const next = new Date();
+  next.setDate(next.getDate() + 1);
+  next.setHours(hour, 0, 0, 0);
+  setTimeout(() => checkAndNotify(hour), next - new Date());
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+async function saveRide() {
+  const purposeFinal = form.purpose === 'Jiné' ? form.purposeCustom : form.purpose;
+  if (!form.from || !form.to) { showToast('Vyplň odkud a kam'); return; }
+
+  const km = kmDiff(form.kmStart, form.kmEnd);
+  const ride = {
+    date: form.date,
+    driver: form.driver,
+    from: form.from,
+    fromGps: form.fromGps,
+    to: form.to,
+    toGps: form.toGps,
+    purpose: purposeFinal || '',
+    kmStart: form.kmStart,
+    kmEnd: form.kmEnd,
+    km: km,
+    note: form.note,
+    createdAt: Date.now(),
+  };
+
+  if (editId !== null) {
+    ride.id = editId;
+    await dbPut('rides', ride);
+    editId = null;
+  } else {
+    await dbPut('rides', ride);
+  }
+
+  rides = await dbAll('rides');
+  rides.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  form = freshForm();
+  savedFlash = true;
+  render();
+  setTimeout(() => { savedFlash = false; render(); }, 2000);
+  showToast('✓ Jízda uložena');
+  updateTotal();
+}
+
+async function deleteRide(id) {
+  await dbDelete('rides', id);
+  rides = await dbAll('rides');
+  rides.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  deleteConfirmId = null;
+  updateTotal();
+  render();
+  showToast('Záznam smazán');
+}
+
+function editRide(id) {
+  const r = rides.find(x => x.id === id);
+  if (!r) return;
+  form = {
+    date: r.date,
+    driver: r.driver,
+    from: r.from,
+    fromGps: r.fromGps || null,
+    to: r.to,
+    toGps: r.toGps || null,
+    purpose: PURPOSES.includes(r.purpose) ? r.purpose : (r.purpose ? 'Jiné' : ''),
+    purposeCustom: PURPOSES.includes(r.purpose) ? '' : (r.purpose || ''),
+    kmStart: r.kmStart || '',
+    kmEnd: r.kmEnd || '',
+    note: r.note || '',
+  };
+  editId = id;
+  setView('add');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function kmDiff(s, e) {
+  const a = parseFloat(s), b = parseFloat(e);
+  if (isNaN(a) || isNaN(b) || b < a) return null;
+  return Math.round((b - a) * 10) / 10;
+}
+
+function formatDate(d) {
+  const [y, m, day] = d.split('-');
+  return `${day}.${m}.${y}`;
+}
+
+function updateTotal() {
+  const total = rides.reduce((a, r) => a + (r.km || 0), 0);
+  document.getElementById('totalKm').textContent = total.toLocaleString('cs-CZ');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function isIncomplete(r) {
+  return !r.purpose || !r.kmStart || !r.kmEnd || !r.from || !r.to;
+}
+
+function exportCSV() {
+  const src = filterDriver === 'all' ? rides : rides.filter(r => r.driver === filterDriver);
+  const header = 'Datum;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';
+  const rows = src.map(r =>
+    [r.date, r.driver, r.from, r.to, r.purpose, r.kmStart, r.kmEnd, r.km ?? '', r.note ?? ''].join(';')
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `kniha-jizd-${today()}.csv`; a.click();
+}
+
+// ─── VIEWS ────────────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  deleteConfirmId = null;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + v)?.classList.add('active');
+  render();
+}
+
+function render() {
+  const c = document.getElementById('content');
+  if (currentView === 'add') c.innerHTML = renderAdd();
+  else if (currentView === 'list') c.innerHTML = renderList();
+  else if (currentView === 'stats') c.innerHTML = renderStats();
+  else if (currentView === 'settings') c.innerHTML = renderSettings();
+}
+
+// ─── ADD VIEW ─────────────────────────────────────────────────────────────────
+function renderAdd() {
+  const km = kmDiff(form.kmStart, form.kmEnd);
+  const incompleteToday = rides.filter(r => r.date === today() && isIncomplete(r));
+
+  return `
+    ${incompleteToday.length > 0 ? `
+    <div class="incomplete-banner" onclick="setView('list')">
+      <div class="incomplete-banner-text">Dnešní jízdy s chybějícími údaji</div>
+      <div class="incomplete-banner-count">${incompleteToday.length}</div>
+    </div>` : ''}
+
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">
+      ${editId !== null ? 'Upravuješ existující záznam' : 'Nová jízda'}
+    </div>
+
+    <div class="field">
+      <div class="field-label">Datum</div>
+      <input type="date" value="${form.date}" onchange="form.date=this.value;render()">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Řidič</div>
+      <div class="driver-toggle">
+        ${DRIVERS.map(d => `<button class="driver-btn ${form.driver===d?'active':''}" onclick="form.driver='${d}';render()">${d}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Odkud</div>
+      <div style="display:flex;gap:8px;">
+        <input style="flex:1;" placeholder="Praha — Žižkov" value="${form.from}"
+          oninput="form.from=this.value">
+        <button class="gps-btn ${gpsFromLoading?'loading':form.fromGps?'done':''}"
+          style="width:auto;padding:11px 13px;flex-shrink:0;"
+          onclick="getGPS('from')">
+          ${gpsFromLoading ? '⟳' : form.fromGps ? '✓ GPS' : '📍 GPS'}
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Kam</div>
+      <div style="display:flex;gap:8px;">
+        <input style="flex:1;" placeholder="Doksany" value="${form.to}"
+          oninput="form.to=this.value">
+        <button class="gps-btn ${gpsToLoading?'loading':form.toGps?'done':''}"
+          style="width:auto;padding:11px 13px;flex-shrink:0;"
+          onclick="getGPS('to')">
+          ${gpsToLoading ? '⟳' : form.toGps ? '✓ GPS' : '📍 GPS'}
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Účel jízdy</div>
+      <select onchange="form.purpose=this.value;render()">
+        <option value="">— vyber účel —</option>
+        ${PURPOSES.map(p => `<option value="${p}" ${form.purpose===p?'selected':''}>${p}</option>`).join('')}
+      </select>
+    </div>
+
+    ${form.purpose === 'Jiné' ? `
+    <div class="field">
+      <div class="field-label">Upřesni účel</div>
+      <input placeholder="Popiš účel jízdy..." value="${form.purposeCustom}"
+        oninput="form.purposeCustom=this.value">
+    </div>` : ''}
+
+    <div class="grid2">
+      <div class="field">
+        <div class="field-label">KM — odjezd</div>
+        <input type="number" placeholder="42 500" value="${form.kmStart}"
+          oninput="form.kmStart=this.value;render()">
+      </div>
+      <div class="field">
+        <div class="field-label">KM — příjezd</div>
+        <input type="number" placeholder="42 580" value="${form.kmEnd}"
+          oninput="form.kmEnd=this.value;render()">
+      </div>
+    </div>
+
+    ${km !== null ? `
+    <div class="km-diff">
+      <span class="km-diff-label">Vzdálenost jízdy</span>
+      <span class="km-diff-val">${km} km</span>
+    </div>` : ''}
+
+    <div class="field">
+      <div class="field-label">Poznámka (volitelné)</div>
+      <input placeholder="Jméno klienta, agenda..." value="${form.note}"
+        oninput="form.note=this.value">
+    </div>
+
+    <button class="submit-btn ${savedFlash?'saved':''}" onclick="saveRide()">
+      ${savedFlash ? '✓ Uloženo' : editId !== null ? 'Uložit změny' : 'Zapsat jízdu'}
+    </button>
+
+    ${editId !== null ? `
+    <button class="cancel-btn" onclick="editId=null;form=freshForm();render()">
+      Zrušit editaci
+    </button>` : ''}
+  `;
+}
+
+// ─── LIST VIEW ────────────────────────────────────────────────────────────────
+function renderList() {
+  const src = filterDriver === 'all' ? rides : rides.filter(r => r.driver === filterDriver);
+  const totalKmFiltered = src.reduce((a, r) => a + (r.km || 0), 0);
+
+  return `
+    <div class="filter-row">
+      ${['all', ...DRIVERS].map(d => `
+        <button class="filter-btn ${filterDriver===d?'active':''}"
+          onclick="filterDriver='${d}';render()">
+          ${d === 'all' ? 'Všichni' : d}
+        </button>`).join('')}
+      <button class="export-btn" onclick="exportCSV()">↓ CSV</button>
+    </div>
+
+    ${src.length > 0 ? `
+    <div class="records-summary">
+      <span>${src.length} jízd</span>
+      <span>${totalKmFiltered.toLocaleString('cs-CZ')} km</span>
+    </div>` : ''}
+
+    ${src.length === 0
+      ? `<div class="empty-state">Žádné záznamy</div>`
+      : src.map(r => `
+        <div class="record-card ${isIncomplete(r)?'incomplete':''}">
+          <div class="record-card-top">
+            <div style="flex:1;min-width:0;">
+              <div class="record-meta">
+                <span class="record-date">${formatDate(r.date)}</span>
+                <span class="record-driver ${r.driver==='David'?'driver-d':'driver-m'}">${r.driver}</span>
+              </div>
+              <div class="record-route">${r.from || '?'} → ${r.to || '?'}</div>
+              <div class="record-purpose">${r.purpose || '<span style="color:var(--red)">Účel chybí</span>'}</div>
+              ${r.note ? `<div class="record-note">${r.note}</div>` : ''}
+              ${isIncomplete(r) ? `<div class="record-incomplete-badge">⚠ Chybí: ${[
+                !r.purpose && 'účel',
+                !r.kmStart && 'KM start',
+                !r.kmEnd && 'KM konec',
+              ].filter(Boolean).join(', ')}</div>` : ''}
+            </div>
+            <div style="flex-shrink:0;margin-left:12px;text-align:right;">
+              ${r.km != null ? `<div class="record-km">${r.km}</div><div class="record-km-label">km</div>` : '<div style="color:var(--muted);font-size:12px;">— km</div>'}
+            </div>
+          </div>
+          <div class="record-actions">
+            <button class="action-btn" onclick="editRide(${r.id})">✏ Upravit</button>
+            <button class="action-btn del" onclick="deleteConfirmId=${r.id};render()">🗑</button>
+          </div>
+          ${deleteConfirmId === r.id ? `
+          <div class="delete-confirm">
+            <span>Smazat tento záznam?</span>
+            <button class="action-btn del" onclick="deleteRide(${r.id})">Smazat</button>
+            <button class="action-btn" onclick="deleteConfirmId=null;render()">Zrušit</button>
+          </div>` : ''}
+        </div>
+      `).join('')}
+  `;
+}
+
+// ─── STATS VIEW ───────────────────────────────────────────────────────────────
+function renderStats() {
+  const total = rides.reduce((a, r) => a + (r.km || 0), 0);
+  const incomplete = rides.filter(isIncomplete).length;
+
+  const byDriver = DRIVERS.map(d => ({
+    name: d,
+    count: rides.filter(r => r.driver === d).length,
+    km: rides.filter(r => r.driver === d).reduce((a, r) => a + (r.km || 0), 0),
+  }));
+
+  const purposeMap = {};
+  rides.forEach(r => {
+    if (!r.purpose) return;
+    if (!purposeMap[r.purpose]) purposeMap[r.purpose] = { count: 0, km: 0 };
+    purposeMap[r.purpose].count++;
+    purposeMap[r.purpose].km += (r.km || 0);
+  });
+  const byPurpose = Object.entries(purposeMap)
+    .map(([name, v]) => ({ name, ...v }))
+    .sort((a, b) => b.km - a.km);
+
+  return `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val">${rides.length}</div>
+        <div class="stat-label">Jízdy celkem</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${total.toLocaleString('cs-CZ')}</div>
+        <div class="stat-label">KM celkem</div>
+      </div>
+      ${incomplete > 0 ? `
+      <div class="stat-card" style="border-color:rgba(248,113,113,0.3);grid-column:span 2;">
+        <div class="stat-val" style="color:var(--red);font-size:20px;">${incomplete} neúplných záznamů</div>
+        <div class="stat-label">Vyžadují doplnění</div>
+      </div>` : `
+      <div class="stat-card" style="border-color:rgba(74,222,128,0.2);grid-column:span 2;">
+        <div class="stat-val" style="color:var(--green);font-size:18px;">✓ Vše vyplněno</div>
+        <div class="stat-label">Žádné chybějící údaje</div>
+      </div>`}
+    </div>
+
+    <div class="section-divider">
+      <div class="section-title">Podle řidiče</div>
+      ${byDriver.map(d => `
+        <div class="stat-row">
+          <div>
+            <div class="stat-row-name">${d.name}</div>
+            <div class="stat-row-sub">${d.count} jízd</div>
+          </div>
+          <div class="stat-row-km">${d.km.toLocaleString('cs-CZ')} km</div>
+        </div>`).join('')}
+    </div>
+
+    ${byPurpose.length > 0 ? `
+    <div class="section-divider">
+      <div class="section-title">Podle účelu</div>
+      ${byPurpose.map(p => `
+        <div class="stat-row">
+          <div style="flex:1;min-width:0;">
+            <div class="stat-row-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
+            <div class="stat-row-sub">${p.count}×</div>
+          </div>
+          <div class="stat-row-km" style="margin-left:12px;">${p.km} km</div>
+        </div>`).join('')}
+    </div>` : ''}
+  `;
+}
+
+// ─── SETTINGS VIEW ────────────────────────────────────────────────────────────
+function renderSettings() {
+  const perm = Notification.permission || 'default';
+  return `
+    <div class="notif-card">
+      <div class="notif-title">🔔 Večerní upomínky</div>
+      <div class="notif-sub">
+        Každý večer v <strong>19:00, 20:00 a 21:00</strong> dostaneš upomínku —
+        ale pouze pokud máš ten den jízdu s chybějícími údaji.
+        Pokud je vše vyplněno, žádná upomínka se nezobrazí.
+      </div>
+      ${perm === 'granted'
+        ? `<button class="notif-btn enabled">✓ Notifikace jsou povoleny</button>`
+        : perm === 'denied'
+          ? `<div style="font-size:12px;color:var(--red);padding:10px;border:1px solid rgba(248,113,113,0.2);border-radius:8px;">
+              Notifikace jsou blokovány v nastaveních prohlížeče.
+              Povol je ručně: Nastavení → Safari → Notifikace.
+            </div>`
+          : `<button class="notif-btn enable" onclick="requestNotifications()">Povolit notifikace</button>`
+      }
+    </div>
+
+    <div class="notif-card">
+      <div class="notif-title">📱 Přidat na plochu (iPhone)</div>
+      <div class="notif-sub">
+        Otevři tuto stránku v <strong>Safari</strong>, klikni na
+        <strong>Sdílet →  Přidat na plochu</strong>.
+        Appka pak funguje jako normální aplikace bez adresního řádku.
+      </div>
+    </div>
+
+    <div class="notif-card">
+      <div class="notif-title">🚗 CarPlay automatizace (iPhone Zkratky)</div>
+      <div class="notif-sub">
+        V aplikaci <strong>Zkratky</strong> vytvoř automatizaci:<br><br>
+        <strong>Trigger:</strong> Když se připojí CarPlay<br>
+        <strong>Akce:</strong> Otevřít URL → adresa této stránky<br><br>
+        Tím se appka otevře automaticky a ty hned klikneš 📍 GPS pro zaznamenání startu.
+      </div>
+    </div>
+
+    <div class="notif-card" style="border-color:rgba(74,222,128,0.15);">
+      <div class="notif-title">💾 Úložiště</div>
+      <div class="notif-sub">
+        Data jsou uložena v <strong>IndexedDB</strong> tohoto prohlížeče — přímo v tvém telefonu.
+        Neodesílají se nikam. Přežijí i vymazání cache prohlížeče.<br><br>
+        Zálohu kdykoliv stáhneš přes <strong>↓ CSV</strong> v záznamu.
+      </div>
+    </div>
+  `;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  await openDB();
+  rides = await dbAll('rides');
+  rides.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
+
+  const notifSetting = await new Promise(res => {
+    const tx = db.transaction('settings', 'readonly');
+    const req = tx.objectStore('settings').get('notif');
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res(null);
+  });
+
+  notifPermission = Notification.permission || 'default';
+  if (notifSetting?.value === 'granted' && notifPermission === 'granted') {
+    scheduleNotifications();
+  }
+
+  updateTotal();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
