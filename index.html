@@ -9,93 +9,67 @@
 <title>Kniha jízd</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#080a0f;--s:#0f1218;--s2:#161b24;--b:#1e2535;--b2:#252e40;
-  --t:#dde4f0;--m:#4a5570;--m2:#6a7590;--a:#e8c547;
-  --g:#4ade80;--r:#f87171;--bl:#60a5fa;--o:#fb923c;--pu:#a78bfa;
-  --font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
-}
+:root{--bg:#080a0f;--s:#0f1218;--s2:#161b24;--b:#1e2535;--b2:#252e40;--t:#dde4f0;--m:#4a5570;--m2:#6a7590;--a:#e8c547;--g:#4ade80;--r:#f87171;--bl:#60a5fa;--o:#fb923c;--pu:#a78bfa;--font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--font);overflow-x:hidden;}
 #app{min-height:100vh;display:flex;flex-direction:column;}
-
-.hdr{background:var(--s);border-bottom:1px solid var(--b);padding:16px 20px 0;position:sticky;top:0;z-index:50;}
-.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
-.logo{font-size:10px;letter-spacing:3px;color:var(--m);text-transform:uppercase;}
-.ttl{font-size:22px;font-weight:600;letter-spacing:-.5px;margin-top:4px;}
-.tot{font-family:var(--mono);font-size:30px;font-weight:300;color:var(--a);line-height:1;}
+.hdr{background:var(--s);border-bottom:1px solid var(--b);padding:14px 20px 0;position:sticky;top:0;z-index:50;}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.logo{font-size:9px;letter-spacing:3px;color:var(--m);text-transform:uppercase;}
+.ttl{font-size:20px;font-weight:600;letter-spacing:-.5px;margin-top:3px;}
+.tot{font-family:var(--mono);font-size:26px;font-weight:300;color:var(--a);line-height:1;}
 .tot-lbl{font-size:9px;color:var(--m);letter-spacing:2px;text-transform:uppercase;text-align:right;margin-top:2px;}
 .nav{display:flex;border-top:1px solid var(--b);margin:0 -20px;}
-.nb{flex:1;padding:12px 4px;background:none;border:none;color:var(--m);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;}
+.nb{flex:1;padding:11px 2px;background:none;border:none;color:var(--m);font-family:var(--font);font-size:10px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;}
 .nb.on{color:var(--a);border-bottom-color:var(--a);}
-.cnt{flex:1;padding:20px 16px 100px;max-width:640px;margin:0 auto;width:100%;}
-
-/* TOAST */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--b2);padding:10px 20px;border-radius:30px;font-size:13px;color:var(--t);opacity:0;transition:all .3s;z-index:400;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.cnt{flex:1;padding:18px 16px 100px;max-width:640px;margin:0 auto;width:100%;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--b2);padding:10px 20px;border-radius:30px;font-size:13px;color:var(--t);opacity:0;transition:all .3s;z-index:400;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* MODAL */
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:flex;align-items:flex-end;justify-content:center;}
-.mw{background:var(--s);border:1px solid var(--b2);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;animation:su .25s ease;position:relative;}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:flex;align-items:flex-end;justify-content:center;}
+.mw{background:var(--s);border:1px solid var(--b2);border-radius:20px 20px 0 0;padding:22px 18px 36px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;animation:su .25s ease;position:relative;}
 @keyframes su{from{transform:translateY(100%);}to{transform:translateY(0);}}
-.mtitle{font-size:17px;font-weight:700;margin-bottom:6px;}
-.msub{font-size:12px;color:var(--m2);margin-bottom:20px;line-height:1.5;}
-.mclose{position:absolute;top:16px;right:20px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;width:32px;height:32px;cursor:pointer;color:var(--m2);font-size:16px;display:flex;align-items:center;justify-content:center;}
-
-/* ACTIVE BANNER */
-.abanner{background:linear-gradient(135deg,rgba(251,146,60,.12),rgba(232,197,71,.06));border:1px solid rgba(251,146,60,.4);border-radius:14px;padding:16px;margin-bottom:20px;animation:glow 2s ease-in-out infinite alternate;}
-@keyframes glow{from{box-shadow:0 0 10px rgba(251,146,60,.1);}to{box-shadow:0 0 24px rgba(251,146,60,.2);}}
-.albl{font-size:10px;letter-spacing:2px;color:var(--o);text-transform:uppercase;margin-bottom:8px;}
-.aroute{font-size:16px;font-weight:600;margin-bottom:4px;}
-.ameta{font-size:12px;color:var(--m2);line-height:1.6;}
-
-/* FIELDS — no re-render on input */
-.fld{margin-bottom:14px;position:relative;}
-.flbl{font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:6px;}
-input.fi,select.fi{width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
+.mtitle{font-size:16px;font-weight:700;margin-bottom:5px;}
+.msub{font-size:12px;color:var(--m2);margin-bottom:18px;line-height:1.5;}
+.mclose{position:absolute;top:14px;right:18px;background:var(--s2);border:1px solid var(--b2);border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--m2);font-size:15px;display:flex;align-items:center;justify-content:center;}
+.abanner{background:linear-gradient(135deg,rgba(251,146,60,.12),rgba(232,197,71,.06));border:1px solid rgba(251,146,60,.4);border-radius:14px;padding:14px;margin-bottom:18px;animation:glow 2s ease-in-out infinite alternate;}
+@keyframes glow{from{box-shadow:0 0 8px rgba(251,146,60,.1);}to{box-shadow:0 0 20px rgba(251,146,60,.2);}}
+.albl{font-size:10px;letter-spacing:2px;color:var(--o);text-transform:uppercase;margin-bottom:6px;}
+.aroute{font-size:15px;font-weight:600;margin-bottom:3px;}
+.ameta{font-size:11px;color:var(--m2);line-height:1.5;}
+.fld{margin-bottom:12px;position:relative;}
+.flbl{font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:5px;}
+input.fi,select.fi{width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t);font-family:var(--font);font-size:14px;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
 input.fi:focus,select.fi:focus{border-color:var(--a);}
-select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
+select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .gps-row{display:flex;gap:8px;align-items:flex-end;}
 .gps-row .fld{flex:1;margin-bottom:0;}
-
-/* AUTOCOMPLETE */
 .aclist{position:absolute;top:100%;left:0;right:0;background:var(--s2);border:1px solid var(--b2);border-radius:0 0 8px 8px;z-index:150;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);}
-.acitem{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--b);line-height:1.4;}
+.acitem{padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--b);line-height:1.4;}
 .acitem:last-child{border-bottom:none;}
 .acitem:active,.acitem:hover{background:var(--b2);}
 .acname{font-weight:500;}
 .acaddr{font-size:11px;color:var(--m2);margin-top:2px;}
-
-/* GPS BTN */
-.gbtn{padding:11px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-family:var(--font);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;}
+.gbtn{padding:10px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-family:var(--font);font-size:11px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;}
 .gbtn.load{color:var(--a);border-color:var(--a);animation:pulse 1s infinite;}
 .gbtn.done{color:var(--g);border-color:var(--g);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-
-/* DRIVER TOGGLE */
-.dtog{display:flex;gap:8px;margin-bottom:14px;}
-.dbtn{flex:1;padding:11px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;}
+.dtog{display:flex;gap:8px;margin-bottom:12px;}
+.dbtn{flex:1;padding:10px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;}
 .dbtn.on{background:rgba(232,197,71,.1);border-color:var(--a);color:var(--a);}
-
-/* SUGGESTIONS */
-.sug{border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.sug{border-radius:8px;padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .sug.bl{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);}
 .sug.gn{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);}
 .sug-t{font-size:12px;flex:1;line-height:1.5;}
 .sug-t.bl{color:var(--bl);}
 .sug-t.gn{color:var(--g);}
-.sug-b{padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;font-weight:600;}
+.sug-b{padding:5px 11px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;font-weight:600;}
 .sug-b.bl{background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);color:var(--bl);}
 .sug-b.gn{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);color:var(--g);}
-
-/* KM DIFF */
-.kmd{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kmd{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:9px 13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .kmd-l{font-size:11px;color:var(--m2);}
-.kmd-v{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--g);}
-
-/* BUTTONS */
-.btn{width:100%;padding:15px;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s;margin-top:8px;display:block;}
+.kmd-v{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--g);}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s;margin-top:7px;display:block;}
 .btn:active{transform:scale(.98);opacity:.9;}
 .btn-y{background:var(--a);color:var(--bg);}
 .btn-o{background:var(--o);color:var(--bg);}
@@ -103,82 +77,89 @@ select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .btn-pu{background:rgba(167,139,250,.15);color:var(--pu);border:1px solid rgba(167,139,250,.3);}
 .btn-g{background:rgba(74,222,128,.15);color:var(--g);border:1px solid rgba(74,222,128,.3);}
 .btn-gh{background:transparent;color:var(--m);border:1px solid var(--b2);}
-.brow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
-.brow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
-
-/* BADGE */
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:16px;}
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px;}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.5px;margin-bottom:14px;}
 .bs{background:rgba(74,222,128,.1);color:var(--g);border:1px solid rgba(74,222,128,.3);}
-.be{background:rgba(251,146,60,.1);color:var(--o);border:1px solid rgba(251,146,60,.3);}
 .bed{background:rgba(96,165,250,.1);color:var(--bl);border:1px solid rgba(96,165,250,.3);}
-
-/* RECORDS */
-.frow{display:flex;gap:6px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
-.fbtn{padding:6px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;}
+.frow{display:flex;gap:6px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.fbtn{padding:5px 11px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;}
 .fbtn.on{background:rgba(232,197,71,.1);border-color:var(--a);color:var(--a);}
-.expbtn{margin-left:auto;padding:6px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;cursor:pointer;}
-.rmeta{display:flex;justify-content:space-between;font-size:11px;color:var(--m);margin-bottom:12px;}
+.expbtn{margin-left:auto;padding:5px 11px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;cursor:pointer;}
+.rmeta{display:flex;justify-content:space-between;font-size:11px;color:var(--m);margin-bottom:10px;}
 .rmeta span:last-child{font-family:var(--mono);color:var(--a);}
-.card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:13px 15px;margin-bottom:9px;}
 .card.inc{border-left:3px solid var(--r);}
 .card.prog{border-left:3px solid var(--o);}
 .card.fuel{border-left:3px solid var(--bl);}
 .card.stop{border-left:3px solid var(--pu);}
 .ctop{display:flex;justify-content:space-between;align-items:flex-start;}
-.cmeta{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+.cmeta{display:flex;gap:7px;align-items:center;margin-bottom:5px;flex-wrap:wrap;}
 .cdate{font-family:var(--mono);font-size:11px;color:var(--m2);}
-.cdrv{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.cdrv{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;}
 .dd{background:rgba(96,165,250,.1);color:var(--bl);}
 .dm{background:rgba(167,139,250,.1);color:var(--pu);}
-.croute{font-size:14px;font-weight:600;margin-bottom:4px;}
-.cpurp{font-size:12px;color:var(--m2);}
-.cnote{font-size:11px;color:var(--m);margin-top:3px;}
-.ckm{font-family:var(--mono);font-size:20px;color:var(--a);}
+.croute{font-size:13px;font-weight:600;margin-bottom:3px;}
+.cpurp{font-size:11px;color:var(--m2);}
+.cnote{font-size:11px;color:var(--m);margin-top:2px;}
+.ckm{font-family:var(--mono);font-size:18px;color:var(--a);}
 .cklbl{font-size:9px;color:var(--m);text-align:right;}
-.cbadge{font-size:10px;margin-top:5px;}
-.cact{display:flex;gap:6px;margin-top:10px;justify-content:flex-end;}
-.abtn{padding:5px 10px;background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--m2);font-size:11px;cursor:pointer;font-family:var(--font);}
+.cbadge{font-size:10px;margin-top:4px;}
+.cact{display:flex;gap:5px;margin-top:9px;justify-content:flex-end;}
+.abtn{padding:4px 9px;background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--m2);font-size:11px;cursor:pointer;font-family:var(--font);}
 .abtn.del{color:var(--r);border-color:rgba(248,113,113,.2);}
 .abtn.fin{color:var(--o);border-color:rgba(251,146,60,.3);}
-.dcf{margin-top:10px;padding:10px 12px;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:8px;display:flex;gap:8px;align-items:center;}
+.dcf{margin-top:9px;padding:9px 12px;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:8px;display:flex;gap:8px;align-items:center;}
 .dcf span{flex:1;font-size:12px;color:var(--r);}
-
 /* STATS */
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
-.sc{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;text-align:center;}
-.sv{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--a);}
-.slbl{font-size:9px;color:var(--m);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
-.stitle{font-size:9px;letter-spacing:3px;color:var(--m);text-transform:uppercase;margin-bottom:12px;margin-top:20px;}
-.sr{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px;}
+.sc{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:14px;text-align:center;}
+.sv{font-family:var(--mono);font-size:26px;font-weight:300;color:var(--a);}
+.slbl{font-size:9px;color:var(--m);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.stitle{font-size:9px;letter-spacing:3px;color:var(--m);text-transform:uppercase;margin-bottom:10px;margin-top:18px;}
+.sr{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:11px 14px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;}
 .srn{font-size:13px;color:var(--m2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .srs{font-size:10px;color:var(--m);margin-top:2px;}
-.srk{font-family:var(--mono);font-size:16px;color:var(--a);flex-shrink:0;margin-left:12px;}
-
+.srk{font-family:var(--mono);font-size:15px;color:var(--a);flex-shrink:0;margin-left:12px;}
+/* SOUHRNY */
+.period-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.pbtn{padding:6px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;}
+.pbtn.on{background:rgba(232,197,71,.1);border-color:var(--a);color:var(--a);}
+.sum-card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:10px;}
+.sum-title{font-size:12px;font-weight:600;color:var(--m2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--b);}
+.sum-row:last-child{border-bottom:none;}
+.sum-lbl{font-size:12px;color:var(--m2);}
+.sum-val{font-family:var(--mono);font-size:14px;color:var(--t);font-weight:500;}
+.sum-val.accent{color:var(--a);}
+.sum-val.blue{color:var(--bl);}
+.sum-val.green{color:var(--g);}
+.filter-section{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;}
+.filter-title{font-size:10px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:10px;}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{padding:5px 11px;background:var(--s2);border:1px solid var(--b2);border-radius:20px;color:var(--m2);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .15s;}
+.chip.on{background:rgba(232,197,71,.1);border-color:var(--a);color:var(--a);}
+.custom-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
 /* SETTINGS */
-.ic{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:14px;}
-.ict{font-size:13px;font-weight:600;margin-bottom:6px;}
+.ic{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:12px;}
+.ict{font-size:13px;font-weight:600;margin-bottom:5px;}
 .icb{font-size:12px;color:var(--m2);line-height:1.7;}
-.nbt{width:100%;padding:12px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;}
+.nbt{width:100%;padding:11px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:9px;}
 .nbt.en{background:rgba(232,197,71,.1);border:1px solid var(--a);color:var(--a);}
 .nbt.ok{background:rgba(74,222,128,.1);border:1px solid var(--g);color:var(--g);}
 .nbt.no{background:var(--s2);border:1px solid var(--b2);color:var(--m);}
 code{font-family:var(--mono);font-size:11px;color:var(--a);word-break:break-all;display:block;margin-top:4px;}
 code.o{color:var(--o);}
-.empty{text-align:center;color:var(--m);padding:60px 20px;font-size:14px;}
-.incbanner{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
-
-/* 3-WAY CHOICE */
-.choice-card{background:var(--s2);border:1px solid var(--b2);border-radius:14px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s;}
+.empty{text-align:center;color:var(--m);padding:50px 20px;font-size:14px;}
+.incbanner{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.choice-card{background:var(--s2);border:1px solid var(--b2);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
 .choice-card:active{transform:scale(.98);}
 .choice-card.pu{border-color:rgba(167,139,250,.4);}
 .choice-card.bl{border-color:rgba(96,165,250,.4);}
 .choice-card.o{border-color:rgba(251,146,60,.4);}
-.choice-icon{font-size:28px;margin-bottom:8px;}
-.choice-title{font-size:15px;font-weight:700;margin-bottom:4px;}
-.choice-desc{font-size:12px;color:var(--m2);line-height:1.5;}
-
-/* SECTION LABEL */
-.sec-lbl{font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:10px;}
+.ch-icon{font-size:26px;margin-bottom:6px;}
+.ch-title{font-size:14px;font-weight:700;margin-bottom:3px;}
+.ch-desc{font-size:12px;color:var(--m2);line-height:1.4;}
+.sec-lbl{font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -191,6 +172,7 @@ code.o{color:var(--o);}
     <nav class="nav">
       <button class="nb on" onclick="setView('add')" id="nav-add">＋ Jízda</button>
       <button class="nb" onclick="setView('list')" id="nav-list">Záznamy</button>
+      <button class="nb" onclick="setView('souhrny')" id="nav-souhrny">Souhrny</button>
       <button class="nb" onclick="setView('stats')" id="nav-stats">Přehled</button>
       <button class="nb" onclick="setView('settings')" id="nav-settings">⚙</button>
     </nav>
@@ -204,7 +186,7 @@ code.o{color:var(--o);}
 // ── DB ────────────────────────────────────────────────────────────────────────
 let db;
 function openDB(){return new Promise((res,rej)=>{
-  const req=indexedDB.open('knjizd_v5',1);
+  const req=indexedDB.open('knjizd_v6',1);
   req.onupgradeneeded=e=>{const d=e.target.result;
     ['rides','fuels','stops','meta'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});
   };
@@ -219,28 +201,26 @@ const dbDel=(s,k)=>new Promise((res,rej)=>{const r=gt(s,'readwrite').delete(k);r
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let rides=[],fuels=[],stops=[],cv='add',editId=null,delId=null,fDriver='all',flash=false;
 let activeRideId=null;
+// Souhrny filters
+let SF={period:'month',dateFrom:'',dateTo:'',purpose:'',driver:'all',tab:'rides'};
+
 const DRIVERS=['David','Manželka'];
 const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Showroom Doksany','Kontrola zaměstnance','Freediving / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
 
-// Form state — NOT re-rendered on every keypress
 const F={date:'',time:'',driver:'David',from:'',fromGps:null,to:'',toGps:null,purpose:'',purposeCustom:'',kmStart:'',kmEnd:'',note:''};
 
 function loadSaved(){
-  try{const s=JSON.parse(localStorage.getItem('F5')||'{}');
-    if(s.driver)F.driver=s.driver;
-    if(s.purpose)F.purpose=s.purpose;
-    if(s.purposeCustom)F.purposeCustom=s.purposeCustom;
-    if(s.note)F.note=s.note;
+  try{const s=JSON.parse(localStorage.getItem('F6')||'{}');
+    if(s.driver)F.driver=s.driver;if(s.purpose)F.purpose=s.purpose;
+    if(s.purposeCustom)F.purposeCustom=s.purposeCustom;if(s.note)F.note=s.note;
     if(s.kmStart)F.kmStart=s.kmStart;
   }catch(e){}
 }
 function saveF(){
-  try{localStorage.setItem('F5',JSON.stringify({driver:F.driver,purpose:F.purpose,purposeCustom:F.purposeCustom,note:F.note,kmStart:F.kmStart}));}catch(e){}
+  try{localStorage.setItem('F6',JSON.stringify({driver:F.driver,purpose:F.purpose,purposeCustom:F.purposeCustom,note:F.note,kmStart:F.kmStart}));}catch(e){}
 }
 function initForm(kmStart){
-  F.date=todayStr();F.time=nowTime();
-  F.from='';F.fromGps=null;F.to='';F.toGps=null;
-  F.kmEnd='';
+  F.date=todayStr();F.time=nowTime();F.from='';F.fromGps=null;F.to='';F.toGps=null;F.kmEnd='';
   if(kmStart!==undefined)F.kmStart=kmStart;
 }
 
@@ -250,8 +230,17 @@ function fmtD(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}.${m}.$
 function kmDiff(s,e){const a=parseFloat(s),b=parseFloat(e);return(!isNaN(a)&&!isNaN(b)&&b>=a)?Math.round((b-a)*10)/10:null;}
 function haversineKm(la,lo,lb,lp){const R=6371,dLat=(lb-la)*Math.PI/180,dLng=(lp-lo)*Math.PI/180;const a=Math.sin(dLat/2)**2+Math.cos(la*Math.PI/180)*Math.cos(lb*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 
-// ── AUTOCOMPLETE (safe — updates DOM directly, no full render) ─────────────────
+// ── COOLDOWN (10 min after stop/fuel/dismiss) ─────────────────────────────────
+function setCooldown(){localStorage.setItem('cooldown',Date.now());}
+function inCooldown(){
+  const t=parseInt(localStorage.getItem('cooldown')||'0');
+  return(Date.now()-t)<10*60*1000;
+}
+
+// ── AUTOCOMPLETE ──────────────────────────────────────────────────────────────
 let acTimers={};
+window._acData={};
+
 async function searchAddr(q){
   if(!q||q.length<3)return[];
   try{
@@ -264,25 +253,7 @@ async function searchAddr(q){
   }catch{return[];}
 }
 
-function setupAC(inputId,listId,onPick){
-  const inp=document.getElementById(inputId);
-  const lst=document.getElementById(listId);
-  if(!inp||!lst)return;
-  inp.addEventListener('input',()=>{
-    const v=inp.value;
-    clearTimeout(acTimers[inputId]);
-    lst.innerHTML='';
-    if(v.length<3)return;
-    acTimers[inputId]=setTimeout(async()=>{
-      const res=await searchAddr(v);
-      if(!document.getElementById(inputId))return;
-      lst.innerHTML=res.map((x,i)=>`<div class="acitem" ontouchend="pickAC('${inputId}','${listId}',${i})" onclick="pickAC('${inputId}','${listId}',${i})" data-name="${x.name.replace(/"/g,'&quot;')}" data-full="${x.full.replace(/"/g,'&quot;')}"><div class="acname">${x.name}</div><div class="acaddr">${x.full}</div></div>`).join('');
-    },450);
-  });
-}
-
-window._acData={};
-function setupAC2(inputId,listId,field){
+function setupAC(inputId,listId,field){
   const inp=document.getElementById(inputId);
   const lst=document.getElementById(listId);
   if(!inp||!lst)return;
@@ -290,35 +261,31 @@ function setupAC2(inputId,listId,field){
     const v=inp.value;
     if(field==='from'){F.from=v;F.fromGps=null;}else if(field==='to'){F.to=v;F.toGps=null;}
     saveF();
-    clearTimeout(acTimers[inputId]);
-    lst.innerHTML='';
+    clearTimeout(acTimers[inputId]);lst.innerHTML='';
     if(v.length<3)return;
     acTimers[inputId]=setTimeout(async()=>{
       const res=await searchAddr(v);
       _acData[listId]=res;
-      if(!document.getElementById(listId))return;
-      document.getElementById(listId).innerHTML=res.map((x,i)=>`<div class="acitem" onclick="pickMainAC('${field}','${listId}',${i})"><div class="acname">${x.name}</div><div class="acaddr">${x.full}</div></div>`).join('');
+      const l=document.getElementById(listId);if(!l)return;
+      l.innerHTML=res.map((x,i)=>`<div class="acitem" onclick="pickAC('${field}','${listId}',${i})"><div class="acname">${x.name}</div><div class="acaddr">${x.full}</div></div>`).join('');
     },450);
   });
 }
 
-function pickMainAC(field,listId,i){
-  const res=_acData[listId]||[];
-  if(!res[i])return;
+function pickAC(field,listId,i){
+  const res=_acData[listId]||[];if(!res[i])return;
   const full=res[i].full||res[i].name;
   if(field==='from'){F.from=full;F.fromGps=null;}else{F.to=full;F.toGps=null;}
   saveF();
   const inp=document.getElementById(field==='from'?'inp-from':'inp-to');
   if(inp)inp.value=full;
-  document.getElementById(listId).innerHTML='';
-  // update km suggestion if both set
+  const lst=document.getElementById(listId);if(lst)lst.innerHTML='';
   updateKmDiffDisplay();
 }
 
 function updateKmDiffDisplay(){
   const km=kmDiff(F.kmStart,F.kmEnd);
-  const el=document.getElementById('kmdiff');
-  if(!el)return;
+  const el=document.getElementById('kmdiff');if(!el)return;
   if(km!==null){el.style.display='flex';el.querySelector('.kmd-v').textContent=km+' km';}
   else el.style.display='none';
 }
@@ -333,11 +300,10 @@ function getGPS(field,cb){
     const addr=await revGeo(lat,lng);
     if(field==='from'){F.from=addr;F.fromGps={lat,lng};saveF();}
     else{F.to=addr;F.toGps={lat,lng};}
-    const inp=document.getElementById('inp-'+field);
-    if(inp)inp.value=addr;
+    const inp=document.getElementById('inp-'+field);if(inp)inp.value=addr;
     if(btn){btn.className='gbtn done';btn.textContent='✓ GPS';}
-    document.getElementById('ac-'+field).innerHTML='';
-    if(cb)cb(addr,{lat,lng});else showToast('📍 Poloha zaznamenána');
+    const lst=document.getElementById('ac-'+field);if(lst)lst.innerHTML='';
+    if(cb)cb(addr,{lat,lng});else{updateKmDiffDisplay();showToast('📍 Poloha zaznamenána');}
   },()=>{
     if(btn){btn.className='gbtn';btn.textContent='📍 GPS';}
     if(cb)cb(null,null);else showToast('GPS selhala — zadej ručně');
@@ -365,14 +331,14 @@ async function startRide(){
   const purposeCustom=document.getElementById('inp-purposeCustom')?.value||F.purposeCustom;
   const kmStart=document.getElementById('inp-kmStart')?.value||F.kmStart;
   const note=document.getElementById('inp-note')?.value||F.note;
-  const pf=purpose==='Jiné'?purposeCustom:purpose;
   if(!from){showToast('Vyplň odkud');return;}
-  F.from=from;F.purpose=purpose;F.purposeCustom=purposeCustom;F.kmStart=kmStart;F.note=note;
-  if(pf)localStorage.setItem('lp',pf);saveF();
-  const ride={date:F.date,time:F.time,driver:F.driver,from:from,fromGps:F.fromGps,to:'',toGps:null,purpose:pf||'',kmStart:kmStart,kmEnd:'',km:null,note:note,inProgress:true,createdAt:Date.now()};
+  const pf=purpose==='Jiné'?purposeCustom:purpose;
+  if(pf)localStorage.setItem('lp',pf);
+  F.from=from;F.purpose=purpose;F.purposeCustom=purposeCustom;F.kmStart=kmStart;F.note=note;saveF();
+  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to:'',toGps:null,purpose:pf||'',kmStart,kmEnd:'',km:null,note,inProgress:true,createdAt:Date.now()};
   const id=await dbPut('rides',ride);
   activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
-  await reload();updateTotal();closeModal();showToast('🚗 Jízda zahájena a uložena');
+  await reload();updateTotal();closeModal();showToast('🚗 Jízda zahájena');
   flash=true;render();setTimeout(()=>{flash=false;},2000);
 }
 
@@ -395,14 +361,23 @@ async function saveFullRide(){
   flash=true;render();setTimeout(()=>{flash=false;},2000);
 }
 
-async function finishRide(toAddr,toGps,kmEnd,purpose,note){
-  const id=editId||activeRideId;
-  if(!id){showToast('Nenalezena aktivní jízda');return;}
-  const ex=rides.find(r=>r.id===id);if(!ex)return;
+// KEY FIX: find active ride directly from DB, not from state
+async function getActiveRide(){
+  const ar=await dbGet('meta','activeRideId');
+  if(!ar?.value)return null;
+  const all=await dbAll('rides');
+  return all.find(r=>r.id===ar.value&&r.inProgress)||all.find(r=>r.inProgress)||null;
+}
+
+async function finishRide(rideId,toAddr,toGps,kmEnd,purpose,note){
+  // Always re-fetch ride directly from DB
+  const all=await dbAll('rides');
+  const ex=all.find(r=>r.id===rideId)||all.find(r=>r.inProgress);
+  if(!ex){showToast('Jízda nenalezena v databázi');return;}
   const pf=purpose||ex.purpose;
   if(pf)localStorage.setItem('lp',pf);
   const km=kmDiff(ex.kmStart,kmEnd);
-  const upd={...ex,to:toAddr||'',toGps:toGps||null,purpose:pf,kmEnd:kmEnd||'',km,note:note||ex.note,inProgress:false};
+  const upd={...ex,to:toAddr||'',toGps:toGps||null,purpose:pf||'',kmEnd:kmEnd||'',km,note:note||ex.note,inProgress:false};
   await dbPut('rides',upd);
   activeRideId=null;await dbDel('meta','activeRideId');editId=null;
   F.kmStart=kmEnd||'';saveF();
@@ -410,21 +385,14 @@ async function finishRide(toAddr,toGps,kmEnd,purpose,note){
   flash=true;render();setTimeout(()=>{flash=false;},2000);
 }
 
-async function saveStop(rideId,addr,gps){
-  const ride=rides.find(r=>r.id===rideId);
-  if(!ride)return;
-  const stop={rideId,date:todayStr(),time:nowTime(),addr:addr||'',gps:gps||null,createdAt:Date.now()};
-  await dbPut('stops',stop);
-  await reload();closeModal();showToast('🅿 Zastávka uložena — jízda pokračuje');render();
-}
-
 async function saveFuel(data){
   await dbPut('fuels',{...data,createdAt:Date.now()});
-  await reload();closeModal();showToast('⛽ Tankování uloženo');render();
+  await reload();closeModal();showToast('⛽ Tankování uloženo');setCooldown();render();
 }
 
 async function delRide(id){
-  if(activeRideId===id){activeRideId=null;await dbDel('meta','activeRideId');}
+  const ar=await dbGet('meta','activeRideId');
+  if(ar?.value===id){activeRideId=null;await dbDel('meta','activeRideId');}
   await dbDel('rides',id);await reload();updateTotal();delId=null;render();showToast('Smazáno');
 }
 async function delFuel(id){await dbDel('fuels',id);await reload();render();showToast('Smazáno');}
@@ -439,7 +407,7 @@ async function editRide(id){
 }
 
 function exportCSV(){
-  const src=fDriver==='all'?rides:rides.filter(r=>r.driver===fDriver);
+  const src=rides;
   const hdr='Datum;Čas;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';
   const rows=src.map(r=>[r.date,r.time||'',r.driver,r.from,r.to,r.purpose,r.kmStart,r.kmEnd,r.km??'',r.note??''].join(';'));
   const blob=new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});
@@ -449,69 +417,62 @@ function exportCSV(){
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function closeModal(){document.getElementById('modals').innerHTML='';}
 
-// Choice modal — 3 options when action=end
-function showChoiceModal(activeRide){
+function showChoiceModal(ride){
+  if(!ride){showToast('Nenalezena aktivní jízda');return;}
   document.getElementById('modals').innerHTML=`
-  <div class="mo" onclick="if(event.target===this)closeModal()">
+  <div class="mo" onclick="if(event.target===this){setCooldown();closeModal();}">
     <div class="mw">
-      <button class="mclose" onclick="closeModal()">✕</button>
+      <button class="mclose" onclick="setCooldown();closeModal()">✕</button>
       <div class="mtitle">Co se děje?</div>
-      <div class="msub">${activeRide.from} · ${activeRide.driver} · ${fmtD(activeRide.date)} ${activeRide.time||''}</div>
-
-      <div class="choice-card pu" onclick="showStopModal(${activeRide.id})">
-        <div class="choice-icon">🅿</div>
-        <div class="choice-title">Zastávka</div>
-        <div class="choice-desc">Zastavil jsem, ale budu pokračovat. Jízda zůstane aktivní, zaznamená se jen poloha a čas.</div>
+      <div class="msub">${ride.from} · ${ride.driver} · ${fmtD(ride.date)} ${ride.time||''}${ride.kmStart?' · '+ride.kmStart+' km':''}</div>
+      <div class="choice-card pu" onclick="showStopModal(${ride.id})">
+        <div class="ch-icon">🅿</div>
+        <div class="ch-title">Zastávka</div>
+        <div class="ch-desc">Zastavil jsem, ale budu pokračovat. Jízda zůstane aktivní, zaznamená se poloha a čas.</div>
       </div>
-
-      <div class="choice-card bl" onclick="showFuelModal(${activeRide.id})">
-        <div class="choice-icon">⛽</div>
-        <div class="choice-title">Tankování</div>
-        <div class="choice-desc">Natankoval jsem. Zaznamenat polohu, množství, cenu. Jízda pokračuje dál.</div>
+      <div class="choice-card bl" onclick="showFuelModal(${ride.id})">
+        <div class="ch-icon">⛽</div>
+        <div class="ch-title">Tankování</div>
+        <div class="ch-desc">Natankoval jsem. Zaznamenám polohu a údaje z dokladu. Jízda pokračuje.</div>
       </div>
-
-      <div class="choice-card o" onclick="showEndModal(${activeRide.id})">
-        <div class="choice-icon">🏁</div>
-        <div class="choice-title">Konec jízdy</div>
-        <div class="choice-desc">Jsem v cíli. Doplnit adresu, km, účel a uložit jízdu.</div>
+      <div class="choice-card o" onclick="showEndModal(${ride.id})">
+        <div class="ch-icon">🏁</div>
+        <div class="ch-title">Konec jízdy</div>
+        <div class="ch-desc">Jsem v cíli. Doplnit adresu, km, účel a uložit.</div>
       </div>
     </div>
   </div>`;
 }
 
-// STOP MODAL
 function showStopModal(rideId){
-  const ride=rides.find(r=>r.id===rideId);if(!ride)return;
   document.getElementById('modals').innerHTML=`
   <div class="mo" onclick="if(event.target===this)closeModal()">
     <div class="mw" style="position:relative;">
       <button class="mclose" onclick="closeModal()">✕</button>
       <div class="mtitle">🅿 Zastávka</div>
-      <div class="msub">Jízda zůstane aktivní. Zaznamená se poloha a čas zastávky.</div>
-      <div id="stop-gps-status" style="font-size:13px;color:var(--m2);margin-bottom:16px;">Zaznamenávám polohu...</div>
-      <div class="fld"><div class="flbl">Poznámka (volitelné)</div><input id="stop-note" class="fi" placeholder="např. oběd, čekání na klienta..."></div>
+      <div class="msub">Jízda zůstane aktivní. Zaznamená se poloha a čas.</div>
+      <div id="stop-status" style="font-size:13px;color:var(--m2);margin-bottom:14px;padding:10px;background:var(--s2);border-radius:8px;">📍 Zaznamenávám polohu...</div>
+      <div class="fld"><div class="flbl">Poznámka (volitelné)</div><input id="stop-note" class="fi" placeholder="oběd, čekání na klienta..."></div>
       <button class="btn btn-pu" onclick="doStop(${rideId})">🅿 Uložit zastávku</button>
-      <button class="btn btn-gh" onclick="closeModal()">Zrušit</button>
+      <button class="btn btn-gh" onclick="setCooldown();closeModal()">Zavřít bez záznamu</button>
     </div>
   </div>`;
-  // Auto GPS
+  window._stopGps=null;
   navigator.geolocation?.getCurrentPosition(async pos=>{
     const{latitude:lat,longitude:lng}=pos.coords;
     const addr=await revGeo(lat,lng);
-    const el=document.getElementById('stop-gps-status');
-    if(el)el.textContent='📍 '+addr;
     window._stopGps={addr,gps:{lat,lng}};
-  },()=>{const el=document.getElementById('stop-gps-status');if(el)el.textContent='GPS nedostupná';},{timeout:8000,enableHighAccuracy:true});
+    const el=document.getElementById('stop-status');if(el)el.textContent='📍 '+addr;
+  },()=>{const el=document.getElementById('stop-status');if(el)el.textContent='GPS nedostupná';},{timeout:8000,enableHighAccuracy:true});
 }
+
 window.doStop=async(rideId)=>{
   const note=document.getElementById('stop-note')?.value||'';
-  const {addr,gps}=window._stopGps||{addr:'',gps:null};
-  const ride=rides.find(r=>r.id===rideId);if(!ride)return;
-  const stop={rideId,date:todayStr(),time:nowTime(),addr,gps,note,createdAt:Date.now()};
-  await dbPut('stops',stop);await reload();closeModal();showToast('🅿 Zastávka uložena — jízda pokračuje');render();
+  const{addr,gps}=window._stopGps||{addr:'',gps:null};
+  await dbPut('stops',{rideId,date:todayStr(),time:nowTime(),addr,gps,note,createdAt:Date.now()});
+  await reload();setCooldown();closeModal();showToast('🅿 Zastávka uložena — jízda pokračuje');render();
 };
 
-// FUEL MODAL
 function showFuelModal(rideId){
   const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
   let fGps=null;
@@ -520,197 +481,209 @@ function showFuelModal(rideId){
     <div class="mw" style="position:relative;">
       <button class="mclose" onclick="closeModal()">✕</button>
       <div class="mtitle">⛽ Tankování</div>
-      <div class="msub">Jízda pokračuje dál. Zadej údaje z dokladu — stačí 2 ze 3 hodnot, třetí se dopočítá.</div>
-      <div id="fuel-gps-status" style="font-size:11px;color:var(--m2);margin-bottom:14px;">📍 Zaznamenávám polohu...</div>
-      <div class="fld"><div class="flbl">Čerpací stanice</div><input id="fuel-station" class="fi" placeholder="např. Shell D8 exit 17"></div>
+      <div class="msub">Jízda pokračuje. Zadej 2 ze 3 hodnot — třetí se dopočítá.</div>
+      <div id="fuel-status" style="font-size:11px;color:var(--m2);margin-bottom:12px;">📍 Zaznamenávám polohu...</div>
+      <div class="fld"><div class="flbl">Čerpací stanice</div><input id="fuel-station" class="fi" placeholder="Shell D8 exit 17"></div>
       <div class="fld"><div class="flbl">Stav KM (tachometr)</div><input id="fuel-km" class="fi" type="number" placeholder="${lastKm||'42500'}" value="${lastKm}"></div>
-      <div style="background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:14px;margin-bottom:14px;">
-        <div class="sec-lbl">Údaje z dokladu — zadej 2 ze 3</div>
+      <div style="background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:13px;margin-bottom:12px;">
+        <div class="sec-lbl">Údaje z dokladu</div>
         <div class="grid2">
-          <div class="fld"><div class="flbl">Litry</div><input id="fuel-liters" class="fi" type="number" step="0.01" placeholder="45.00" oninput="fuelCalc()"></div>
-          <div class="fld"><div class="flbl">Kč / litr</div><input id="fuel-ppl" class="fi" type="number" step="0.01" placeholder="36.90" oninput="fuelCalc()"></div>
+          <div class="fld"><div class="flbl">Litry</div><input id="fuel-l" class="fi" type="number" step="0.01" placeholder="45.00" oninput="fuelCalc()"></div>
+          <div class="fld"><div class="flbl">Kč / litr</div><input id="fuel-p" class="fi" type="number" step="0.01" placeholder="36.90" oninput="fuelCalc()"></div>
         </div>
-        <div class="fld"><div class="flbl">Celkem Kč</div><input id="fuel-total" class="fi" type="number" step="0.01" placeholder="1660.50" oninput="fuelCalc()"></div>
-        <div id="fuel-calc-msg" style="font-size:12px;color:var(--g);margin-top:4px;min-height:18px;"></div>
+        <div class="fld"><div class="flbl">Celkem Kč</div><input id="fuel-t" class="fi" type="number" step="0.01" placeholder="1660.50" oninput="fuelCalc()"></div>
+        <div id="fuel-calc" style="font-size:12px;color:var(--g);margin-top:4px;min-height:16px;"></div>
       </div>
-      <div class="fld"><div class="flbl">Poznámka</div><input id="fuel-note" class="fi" placeholder="Platba kartou, přívěs..."></div>
+      <div class="fld"><div class="flbl">Poznámka</div><input id="fuel-note" class="fi" placeholder="Platba kartou..."></div>
       <button class="btn btn-bl" onclick="doFuel(${rideId||'null'})">⛽ Uložit tankování</button>
       <button class="btn btn-gh" onclick="closeModal()">Zrušit</button>
     </div>
   </div>`;
-
   window.fuelCalc=()=>{
-    const l=parseFloat(document.getElementById('fuel-liters')?.value);
-    const p=parseFloat(document.getElementById('fuel-ppl')?.value);
-    const t=parseFloat(document.getElementById('fuel-total')?.value);
-    const msg=document.getElementById('fuel-calc-msg');if(!msg)return;
-    if(!isNaN(l)&&!isNaN(p)&&isNaN(t)){msg.textContent=`Celkem: ${(l*p).toFixed(2)} Kč`;}
-    else if(!isNaN(l)&&!isNaN(t)&&isNaN(p)){msg.textContent=`Cena/litr: ${(t/l).toFixed(2)} Kč`;}
-    else if(!isNaN(p)&&!isNaN(t)&&isNaN(l)){msg.textContent=`Litry: ${(t/p).toFixed(2)} l`;}
-    else msg.textContent='';
+    const l=parseFloat(document.getElementById('fuel-l')?.value);
+    const p=parseFloat(document.getElementById('fuel-p')?.value);
+    const t=parseFloat(document.getElementById('fuel-t')?.value);
+    const el=document.getElementById('fuel-calc');if(!el)return;
+    if(!isNaN(l)&&!isNaN(p)&&isNaN(t))el.textContent=`→ Celkem: ${(l*p).toFixed(2)} Kč`;
+    else if(!isNaN(l)&&!isNaN(t)&&isNaN(p))el.textContent=`→ Cena/litr: ${(t/l).toFixed(2)} Kč`;
+    else if(!isNaN(p)&&!isNaN(t)&&isNaN(l))el.textContent=`→ Litry: ${(t/p).toFixed(2)} l`;
+    else el.textContent='';
   };
-
   window.doFuel=async(rideId)=>{
-    const l=parseFloat(document.getElementById('fuel-liters')?.value)||null;
-    const p=parseFloat(document.getElementById('fuel-ppl')?.value)||null;
-    let t=parseFloat(document.getElementById('fuel-total')?.value)||null;
+    const l=parseFloat(document.getElementById('fuel-l')?.value)||null;
+    const p=parseFloat(document.getElementById('fuel-p')?.value)||null;
+    let t=parseFloat(document.getElementById('fuel-t')?.value)||null;
     if(!t&&l&&p)t=Math.round(l*p*100)/100;
-    const data={
-      rideId:rideId||null,date:todayStr(),time:nowTime(),
-      station:document.getElementById('fuel-station')?.value||'',
-      km:document.getElementById('fuel-km')?.value||'',
-      liters:l,pricePer:p,priceTotal:t,
-      gps:fGps,note:document.getElementById('fuel-note')?.value||''
-    };
-    await saveFuel(data);
+    await saveFuel({rideId:rideId||null,date:todayStr(),time:nowTime(),station:document.getElementById('fuel-station')?.value||'',km:document.getElementById('fuel-km')?.value||'',liters:l,pricePer:p,priceTotal:t,gps:fGps,note:document.getElementById('fuel-note')?.value||''});
   };
-
-  // Auto GPS
   navigator.geolocation?.getCurrentPosition(async pos=>{
-    const{latitude:lat,longitude:lng}=pos.coords;
-    fGps={lat,lng};
+    const{latitude:lat,longitude:lng}=pos.coords;fGps={lat,lng};
     const addr=await revGeo(lat,lng);
-    const el=document.getElementById('fuel-gps-status');
-    if(el)el.textContent='📍 '+addr;
-    const si=document.getElementById('fuel-station');
-    if(si&&!si.value)si.placeholder=addr;
-  },()=>{const el=document.getElementById('fuel-gps-status');if(el)el.textContent='GPS nedostupná';},{timeout:8000,enableHighAccuracy:true});
+    const el=document.getElementById('fuel-status');if(el)el.textContent='📍 '+addr;
+    const si=document.getElementById('fuel-station');if(si&&!si.value)si.placeholder=addr;
+  },()=>{const el=document.getElementById('fuel-status');if(el)el.textContent='GPS nedostupná';},{timeout:8000,enableHighAccuracy:true});
 }
 
-// END MODAL
 function showEndModal(rideId){
-  const ride=rides.find(r=>r.id===rideId);
-  if(!ride){showToast('Jízda nenalezena');return;}
-  let toAddr='',toGps=null,kmEnd='',purpose=ride.purpose||'',purposeCustom='',note=ride.note||'',kmSug=null;
+  // Immediately fetch from current rides array first, fallback to DB
+  let ride=rides.find(r=>r.id===rideId)||rides.find(r=>r.inProgress);
+  if(!ride){showToast('Načítám jízdu...');dbAll('rides').then(all=>{const r=all.find(x=>x.id===rideId)||all.find(x=>x.inProgress);if(r)showEndModal2(r);else showToast('Jízda nenalezena');});return;}
+  showEndModal2(ride);
+}
 
-  function est(){
+function showEndModal2(ride){
+  let toAddr='',toGps=null,kmEnd='',purpose=ride.purpose||'',purposeCustom='',note=ride.note||'',kmSug=null,acRes=[];
+
+  function calcSug(){
     if(ride.fromGps&&toGps&&ride.kmStart){
       const dist=haversineKm(ride.fromGps.lat,ride.fromGps.lng,toGps.lat,toGps.lng);
       const road=Math.round(dist*1.3*1.06);
       const base=parseFloat(ride.kmStart);
-      if(!isNaN(base)&&road>0){kmSug=Math.round(base+road);return kmSug;}
-    }return null;
-  }
-
-  function rm(){
-    const km=kmDiff(ride.kmStart,kmEnd);
-    const sugHtml=kmSug&&!kmEnd?`<div class="sug gn" style="margin-bottom:14px;"><div class="sug-t gn">Odhadovaný příjezd (+6%): <strong>${kmSug} km</strong></div><button class="sug-b gn" onclick="endAccKm()">Použít</button></div>`:'';
-    const kmHtml=km!==null?`<div class="kmd"><span class="kmd-l">Vzdálenost jízdy</span><span class="kmd-v">${km} km</span></div>`:'';
-    document.getElementById('modals').innerHTML=`
-    <div class="mo" onclick="if(event.target===this)closeModal()">
-      <div class="mw" style="position:relative;">
-        <button class="mclose" onclick="closeModal()">✕</button>
-        <div class="mtitle">🏁 Konec jízdy</div>
-        <div class="msub">${ride.from} · ${ride.driver} · ${fmtD(ride.date)} ${ride.time||''}${ride.kmStart?' · start: '+ride.kmStart+' km':''}</div>
-
-        <div class="fld" style="position:relative;">
-          <div class="flbl">Kam (příjezd)</div>
-          <div class="gps-row">
-            <div class="fld" style="flex:1;margin-bottom:0;position:relative;">
-              <input id="end-to" class="fi" placeholder="Adresa příjezdu" value="${toAddr}">
-              <div id="end-ac"></div>
-            </div>
-            <button id="end-gps-btn" class="gbtn" onclick="endGPS()">📍 GPS</button>
-          </div>
-        </div>
-
-        <div class="fld">
-          <div class="flbl">Účel jízdy</div>
-          <select id="end-purpose" class="fi" onchange="endPurpChange(this.value)">
-            <option value="">— vyber účel —</option>
-            ${PURPOSES.map(p=>`<option value="${p}" ${purpose===p?'selected':''}>${p}</option>`).join('')}
-          </select>
-        </div>
-        ${purpose==='Jiné'?`<div class="fld"><div class="flbl">Upřesni</div><input id="end-purp-custom" class="fi" placeholder="Popiš účel..." value="${purposeCustom}"></div>`:''}
-
-        <div class="fld">
-          <div class="flbl">Poznámka</div>
-          <input id="end-note" class="fi" placeholder="Jméno klienta, agenda..." value="${note}">
-        </div>
-
-        <div class="grid2">
-          <div class="fld"><div class="flbl">KM — odjezd</div><input class="fi" value="${ride.kmStart||''}" disabled style="opacity:.5;"></div>
-          <div class="fld"><div class="flbl">KM — příjezd</div><input id="end-km" class="fi" type="number" placeholder="příjezd" value="${kmEnd}" oninput="endKmChange(this.value)"></div>
-        </div>
-
-        ${sugHtml}${kmHtml}
-
-        <button class="btn btn-o" onclick="doFinish()">🏁 Uložit a dokončit</button>
-        <button class="btn btn-gh" onclick="closeModal()">Zavřít</button>
-      </div>
-    </div>`;
-
-    // Setup autocomplete for end-to without re-render
-    const inp=document.getElementById('end-to');
-    const lst=document.getElementById('end-ac');
-    if(inp&&lst){
-      inp.addEventListener('input',()=>{
-        const v=inp.value;toAddr=v;toGps=null;
-        clearTimeout(acTimers['end-to']);
-        lst.innerHTML='';
-        if(v.length<3)return;
-        acTimers['end-to']=setTimeout(async()=>{
-          const res=await searchAddr(v);
-          _acData['end-ac']=res;
-          if(!document.getElementById('end-ac'))return;
-          document.getElementById('end-ac').innerHTML=res.map((x,i)=>`<div class="acitem" onclick="endPickAC(${i})"><div class="acname">${x.name}</div><div class="acaddr">${x.full}</div></div>`).join('');
-        },450);
-      });
+      if(!isNaN(base)&&road>0){kmSug=Math.round(base+road);}
     }
   }
 
-  window.endPickAC=(i)=>{const res=_acData['end-ac']||[];if(!res[i])return;toAddr=res[i].full||res[i].name;toGps=null;document.getElementById('end-to').value=toAddr;document.getElementById('end-ac').innerHTML='';};
+  function renderSugAndKm(){
+    // Update suggestion div
+    const sugEl=document.getElementById('end-sug');
+    const km=kmDiff(ride.kmStart,kmEnd);
+    if(sugEl){
+      if(kmSug&&!kmEnd)sugEl.innerHTML=`<div class="sug gn"><div class="sug-t gn">Odhadovaný příjezd (+6%): <strong>${kmSug} km</strong></div><button class="sug-b gn" onclick="endAccKm()">Použít</button></div>`;
+      else sugEl.innerHTML='';
+    }
+    const kmdEl=document.getElementById('end-kmd');
+    if(kmdEl){
+      if(km!==null)kmdEl.innerHTML=`<div class="kmd"><span class="kmd-l">Vzdálenost jízdy</span><span class="kmd-v">${km} km</span></div>`;
+      else kmdEl.innerHTML='';
+    }
+  }
+
+  document.getElementById('modals').innerHTML=`
+  <div class="mo" onclick="if(event.target===this)closeModal()">
+    <div class="mw" style="position:relative;">
+      <button class="mclose" onclick="closeModal()">✕</button>
+      <div class="mtitle">🏁 Konec jízdy</div>
+      <div class="msub">${ride.from||'?'} · ${ride.driver} · ${fmtD(ride.date)} ${ride.time||''}${ride.kmStart?' · start: '+ride.kmStart+' km':''}</div>
+
+      <div class="fld" style="position:relative;">
+        <div class="flbl">Kam (příjezd)</div>
+        <div class="gps-row">
+          <div class="fld" style="flex:1;margin-bottom:0;position:relative;">
+            <input id="end-to" class="fi" placeholder="Adresa příjezdu" value="${toAddr}">
+            <div id="end-ac"></div>
+          </div>
+          <button id="end-gps" class="gbtn" onclick="endGPS()">📍 GPS</button>
+        </div>
+      </div>
+
+      <div class="fld">
+        <div class="flbl">Účel jízdy</div>
+        <select id="end-purpose" class="fi" onchange="endPurposeChange(this.value)">
+          <option value="">— vyber účel —</option>
+          ${PURPOSES.map(p=>`<option value="${p}" ${purpose===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div id="end-purp-custom-wrap" style="display:${purpose==='Jiné'?'block':'none'}">
+        <div class="fld"><div class="flbl">Upřesni účel</div><input id="end-purp-custom" class="fi" placeholder="Popiš účel..." value="${purposeCustom}"></div>
+      </div>
+
+      <div class="fld"><div class="flbl">Poznámka</div><input id="end-note" class="fi" placeholder="Jméno klienta, agenda..." value="${note}"></div>
+
+      <div class="grid2">
+        <div class="fld"><div class="flbl">KM — odjezd</div><input class="fi" value="${ride.kmStart||''}" disabled style="opacity:.5;"></div>
+        <div class="fld"><div class="flbl">KM — příjezd</div><input id="end-km" class="fi" type="number" placeholder="příjezd" value="${kmEnd}" oninput="endKmInput(this.value)"></div>
+      </div>
+
+      <div id="end-sug"></div>
+      <div id="end-kmd"></div>
+
+      <button class="btn btn-o" onclick="endFinish(${ride.id})">🏁 Uložit a dokončit</button>
+      <button class="btn btn-gh" onclick="closeModal()">Zavřít</button>
+    </div>
+  </div>`;
+
+  // Autocomplete for end-to — direct DOM
+  const inp=document.getElementById('end-to');
+  const lst=document.getElementById('end-ac');
+  if(inp&&lst){
+    inp.addEventListener('input',()=>{
+      toAddr=inp.value;toGps=null;
+      clearTimeout(acTimers['end-to']);lst.innerHTML='';
+      if(toAddr.length<3)return;
+      acTimers['end-to']=setTimeout(async()=>{
+        acRes=await searchAddr(toAddr);
+        _acData['end-ac']=acRes;
+        const l=document.getElementById('end-ac');if(!l)return;
+        l.innerHTML=acRes.map((x,i)=>`<div class="acitem" onclick="endPickAC(${i})"><div class="acname">${x.name}</div><div class="acaddr">${x.full}</div></div>`).join('');
+      },450);
+    });
+  }
+
+  window.endPickAC=(i)=>{
+    const res=_acData['end-ac']||[];if(!res[i])return;
+    toAddr=res[i].full||res[i].name;toGps=null;
+    const inp2=document.getElementById('end-to');if(inp2)inp2.value=toAddr;
+    const lst2=document.getElementById('end-ac');if(lst2)lst2.innerHTML='';
+  };
   window.endGPS=()=>{
-    const btn=document.getElementById('end-gps-btn');
+    const btn=document.getElementById('end-gps');
     if(btn){btn.className='gbtn load';btn.textContent='⟳';}
     navigator.geolocation?.getCurrentPosition(async pos=>{
       const{latitude:lat,longitude:lng}=pos.coords;toGps={lat,lng};
       toAddr=await revGeo(lat,lng);
-      const inp=document.getElementById('end-to');if(inp)inp.value=toAddr;
-      document.getElementById('end-ac').innerHTML='';
+      const i2=document.getElementById('end-to');if(i2)i2.value=toAddr;
+      const l2=document.getElementById('end-ac');if(l2)l2.innerHTML='';
       if(btn){btn.className='gbtn done';btn.textContent='✓ GPS';}
       showToast('📍 Poloha zaznamenána');
-      est();
-      const sug=est();
-      if(sug&&!kmEnd){
-        // inject suggestion without full re-render
-        const km=kmDiff(ride.kmStart,kmEnd);
-        const sugEl=document.createElement('div');
-        sugEl.className='sug gn';sugEl.style.marginBottom='14px';
-        sugEl.innerHTML=`<div class="sug-t gn">Odhadovaný příjezd (+6%): <strong>${sug} km</strong></div><button class="sug-b gn" onclick="endAccKm()">Použít</button>`;
-        document.getElementById('end-km')?.parentElement?.parentElement?.insertBefore(sugEl,document.getElementById('end-km')?.parentElement);
-      }
+      calcSug();renderSugAndKm();
     },()=>{if(btn){btn.className='gbtn';btn.textContent='📍 GPS';}showToast('GPS selhala');},{timeout:10000,enableHighAccuracy:true});
   };
-  window.endKmChange=(v)=>{kmEnd=v;updateEndKmDiff();};
-  window.endPurpChange=(v)=>{purpose=v;rm();};
-  window.endAccKm=()=>{kmEnd=String(kmSug);const inp=document.getElementById('end-km');if(inp)inp.value=kmEnd;updateEndKmDiff();};
-  window.doFinish=async()=>{
+  window.endKmInput=(v)=>{kmEnd=v;kmSug=null;renderSugAndKm();};
+  window.endAccKm=()=>{kmEnd=String(kmSug);const i2=document.getElementById('end-km');if(i2)i2.value=kmEnd;kmSug=null;renderSugAndKm();};
+  window.endPurposeChange=(v)=>{
+    purpose=v;
+    const w=document.getElementById('end-purp-custom-wrap');if(w)w.style.display=v==='Jiné'?'block':'none';
+  };
+  window.endFinish=async(rideId)=>{
     toAddr=document.getElementById('end-to')?.value||toAddr;
     kmEnd=document.getElementById('end-km')?.value||kmEnd;
     note=document.getElementById('end-note')?.value||note;
-    const pCustom=document.getElementById('end-purp-custom')?.value||purposeCustom;
-    const pf=purpose==='Jiné'?pCustom:purpose;
+    const pc=document.getElementById('end-purp-custom')?.value||purposeCustom;
+    const pf=purpose==='Jiné'?pc:purpose;
     if(!toAddr){showToast('Vyplň kam');return;}
-    await finishRide(toAddr,toGps,kmEnd,pf,note);
+    await finishRide(rideId,toAddr,toGps,kmEnd,pf,note);
   };
 
-  rm();
-  // Auto GPS after short delay
-  setTimeout(()=>window.endGPS&&window.endGPS(),400);
+  // Auto GPS
+  setTimeout(()=>window.endGPS&&window.endGPS(),300);
 }
 
-function updateEndKmDiff(){
-  const ride=rides.find(r=>r.inProgress)||rides.find(r=>r.id===editId);
-  if(!ride)return;
-  const kmEnd=document.getElementById('end-km')?.value||'';
-  const km=kmDiff(ride.kmStart,kmEnd);
-  // find or create kmd
-  let el=document.querySelector('.mo .kmd');
-  if(km!==null){
-    if(!el){el=document.createElement('div');el.className='kmd';el.innerHTML=`<span class="kmd-l">Vzdálenost jízdy</span><span class="kmd-v"></span>`;document.getElementById('end-km')?.closest('.grid2')?.after(el);}
-    el.querySelector('.kmd-v').textContent=km+' km';
-  }else if(el){el.remove();}
+// ── URL ACTION ────────────────────────────────────────────────────────────────
+async function handleUrl(action){
+  const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
+
+  if(action==='start'){
+    // Check cooldown — if within 10 min of stop/fuel/dismiss, ignore
+    if(inCooldown()){
+      const active=await getActiveRide();
+      if(active){showToast('Jízda stále aktivní — pokračuj');setView('add');render();return;}
+    }
+    // Check if there's already an active ride
+    const active=await getActiveRide();
+    if(active){showToast('Jízda stále aktivní — pokračuj');setView('add');render();return;}
+    const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
+    initForm(lastKm);setView('add');
+    setTimeout(()=>getGPS('from'),500);showToast('🚗 Start — zaznamenávám polohu...');
+
+  }else if(action==='end'){
+    const active=await getActiveRide();
+    if(active){
+      setView('add');render();
+      setTimeout(()=>showChoiceModal(active),100);
+    }else{
+      initForm('');setView('add');showToast('Žádná aktivní jízda');
+    }
+  }
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
@@ -727,19 +700,21 @@ function chkNotif(h){
   const n=new Date();n.setDate(n.getDate()+1);n.setHours(h,0,0,0);setTimeout(()=>chkNotif(h),n-new Date());
 }
 
-// ── URL ───────────────────────────────────────────────────────────────────────
-async function handleUrl(action){
-  const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
-  if(action==='start'){
-    const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
-    initForm(lastKm);setView('add');
-    setTimeout(()=>getGPS('from'),600);showToast('🚗 Start — zaznamenávám polohu...');
-  }else if(action==='end'){
-    const active=rides.find(r=>r.inProgress);
-    if(active){setView('add');render();setTimeout(()=>showChoiceModal(active),100);}
-    else{initForm('');setView('add');showToast('Žádná aktivní jízda');}
-  }
+// ── DATE HELPERS ──────────────────────────────────────────────────────────────
+function getPeriodRange(period){
+  const now=new Date();
+  let from,to=todayStr();
+  if(period==='today'){from=todayStr();}
+  else if(period==='week'){const d=new Date(now);d.setDate(d.getDate()-d.getDay()+1);from=d.toISOString().split('T')[0];}
+  else if(period==='month'){from=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;}
+  else if(period==='quarter'){const q=Math.floor(now.getMonth()/3);from=`${now.getFullYear()}-${String(q*3+1).padStart(2,'0')}-01`;}
+  else if(period==='year'){from=`${now.getFullYear()}-01-01`;}
+  else if(period==='custom'){from=SF.dateFrom||'2020-01-01';to=SF.dateTo||todayStr();}
+  else{from='2020-01-01';}
+  return{from,to};
 }
+
+function inRange(dateStr,from,to){return dateStr>=from&&dateStr<=to;}
 
 // ── VIEWS ─────────────────────────────────────────────────────────────────────
 function setView(v){cv=v;delId=null;document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));document.getElementById('nav-'+v)?.classList.add('on');render();}
@@ -748,32 +723,27 @@ function render(){
   const c=document.getElementById('cnt');if(!c)return;
   if(cv==='add')c.innerHTML=renderAdd();
   else if(cv==='list')c.innerHTML=renderList();
+  else if(cv==='souhrny')c.innerHTML=renderSouhrny();
   else if(cv==='stats')c.innerHTML=renderStats();
   else if(cv==='settings')c.innerHTML=renderSettings();
   if(cv==='add')attachAddListeners();
 }
 
 function attachAddListeners(){
-  // Setup autocomplete — direct DOM, no re-render
-  setupAC2('inp-from','ac-from','from');
-  setupAC2('inp-to','ac-to','to');
-  // KM inputs — update diff display only
+  setupAC('inp-from','ac-from','from');
+  setupAC('inp-to','ac-to','to');
   const ks=document.getElementById('inp-kmStart');
   const ke=document.getElementById('inp-kmEnd');
   if(ks)ks.addEventListener('input',()=>{F.kmStart=ks.value;saveF();updateKmDiffDisplay();});
   if(ke)ke.addEventListener('input',()=>{F.kmEnd=ke.value;updateKmDiffDisplay();});
-  // Purpose
   const pur=document.getElementById('inp-purpose');
-  if(pur)pur.addEventListener('change',()=>{F.purpose=pur.value;saveF();
-    // show/hide custom field
-    const cw=document.getElementById('purp-custom-wrap');
-    if(cw)cw.style.display=F.purpose==='Jiné'?'block':'none';
+  if(pur)pur.addEventListener('change',()=>{
+    F.purpose=pur.value;saveF();
+    const w=document.getElementById('purp-custom-wrap');
+    if(w)w.style.display=F.purpose==='Jiné'?'block':'none';
   });
-  // Note, driver fields — just update F
-  const note=document.getElementById('inp-note');
-  if(note)note.addEventListener('input',()=>{F.note=note.value;saveF();});
-  const pc=document.getElementById('inp-purposeCustom');
-  if(pc)pc.addEventListener('input',()=>{F.purposeCustom=pc.value;saveF();});
+  const note=document.getElementById('inp-note');if(note)note.addEventListener('input',()=>{F.note=note.value;saveF();});
+  const pc=document.getElementById('inp-purposeCustom');if(pc)pc.addEventListener('input',()=>{F.purposeCustom=pc.value;saveF();});
 }
 
 // ── ADD VIEW ──────────────────────────────────────────────────────────────────
@@ -782,97 +752,119 @@ function renderAdd(){
   const lastKmEnd=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||null;
   const incToday=rides.filter(r=>r.date===todayStr()&&isInc(r));
   const km=kmDiff(F.kmStart,F.kmEnd);
-
   return`
-    ${active?`<div class="abanner"><div class="albl">🚗 Probíhající jízda</div><div class="aroute">${active.from} → ...</div><div class="ameta">${active.driver} · ${fmtD(active.date)} ${active.time||''}${active.kmStart?' · '+active.kmStart+' km':''}<br>${active.purpose||'<span style="color:var(--o)">účel nevyplněn</span>'}</div>
-      <div class="brow" style="margin-top:12px;">
-        <button class="btn btn-o" style="margin-top:0;" onclick="showChoiceModal(rides.find(r=>r.inProgress))">Akce jízdy</button>
-        <button class="btn btn-bl" style="margin-top:0;" onclick="showFuelModal(${active.id})">⛽ Tankování</button>
-      </div></div>`:''}
-
+    ${active?`<div class="abanner"><div class="albl">🚗 Probíhající jízda</div><div class="aroute">${active.from} → ...</div><div class="ameta">${active.driver} · ${fmtD(active.date)} ${active.time||''}${active.kmStart?' · '+active.kmStart+' km':''}<br>${active.purpose||'<span style="color:var(--o)">účel nevyplněn</span>'}</div><div class="brow" style="margin-top:10px;"><button class="btn btn-o" style="margin-top:0;" onclick="showChoiceModal(rides.find(r=>r.inProgress))">Akce jízdy</button><button class="btn btn-bl" style="margin-top:0;" onclick="showFuelModal(${active.id})">⛽ Tankování</button></div></div>`:''}
     ${incToday.length>0?`<div class="incbanner" onclick="setView('list')"><span style="flex:1;font-size:13px;color:var(--r);">Dnešní neúplné záznamy</span><span style="font-family:var(--mono);font-size:20px;color:var(--r);">${incToday.length}</span></div>`:''}
-
-    <div class="badge ${editId?'bed':'bs'}">${editId?'✏ Úprava záznamu':'🚗 Nová jízda'}</div>
-
+    <div class="badge ${editId?'bed':'bs'}">${editId?'✏ Úprava':'🚗 Nová jízda'}</div>
     <div class="fld"><div class="flbl">Datum</div><input id="inp-date" class="fi" type="date" value="${F.date}" onchange="F.date=this.value"></div>
     <div class="fld"><div class="flbl">Čas odjezdu</div><input id="inp-time" class="fi" type="time" value="${F.time}" onchange="F.time=this.value"></div>
-
-    <div class="flbl">Řidič</div>
-    <div class="dtog">
-      ${DRIVERS.map(d=>`<button class="dbtn ${F.driver===d?'on':''}" onclick="F.driver='${d}';saveF();this.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${d}</button>`).join('')}
-    </div>
-
-    <div class="fld">
-      <div class="flbl">Odkud</div>
-      <div class="gps-row">
-        <div class="fld" style="flex:1;margin-bottom:0;position:relative;">
-          <input id="inp-from" class="fi" placeholder="Začni psát adresu..." value="${F.from}">
-          <div id="ac-from"></div>
-        </div>
-        <button id="gps-from" class="gbtn ${F.fromGps?'done':''}" onclick="getGPS('from')">${F.fromGps?'✓ GPS':'📍 GPS'}</button>
-      </div>
-    </div>
-
-    <div class="fld">
-      <div class="flbl">Kam</div>
-      <div class="gps-row">
-        <div class="fld" style="flex:1;margin-bottom:0;position:relative;">
-          <input id="inp-to" class="fi" placeholder="Začni psát adresu..." value="${F.to}">
-          <div id="ac-to"></div>
-        </div>
-        <button id="gps-to" class="gbtn ${F.toGps?'done':''}" onclick="getGPS('to')">${F.toGps?'✓ GPS':'📍 GPS'}</button>
-      </div>
-    </div>
-
-    <div class="fld">
-      <div class="flbl">Účel jízdy</div>
-      <select id="inp-purpose" class="fi">
-        <option value="">— vyber účel —</option>
-        ${PURPOSES.map(p=>`<option value="${p}" ${F.purpose===p?'selected':''}>${p}</option>`).join('')}
-      </select>
-    </div>
-    <div id="purp-custom-wrap" style="display:${F.purpose==='Jiné'?'block':'none'}">
-      <div class="fld"><div class="flbl">Upřesni účel</div><input id="inp-purposeCustom" class="fi" placeholder="Popiš účel..." value="${F.purposeCustom}"></div>
-    </div>
-
-    <div class="fld"><div class="flbl">Poznámka (volitelné)</div><input id="inp-note" class="fi" placeholder="Jméno klienta, agenda..." value="${F.note}"></div>
-
+    <div class="flbl" style="margin-bottom:6px;">Řidič</div>
+    <div class="dtog">${DRIVERS.map(d=>`<button class="dbtn ${F.driver===d?'on':''}" onclick="F.driver='${d}';saveF();this.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${d}</button>`).join('')}</div>
+    <div class="fld"><div class="flbl">Odkud</div><div class="gps-row"><div class="fld" style="flex:1;margin-bottom:0;position:relative;"><input id="inp-from" class="fi" placeholder="Začni psát adresu..." value="${F.from}"><div id="ac-from"></div></div><button id="gps-from" class="gbtn ${F.fromGps?'done':''}" onclick="getGPS('from')">${F.fromGps?'✓ GPS':'📍 GPS'}</button></div></div>
+    <div class="fld"><div class="flbl">Kam</div><div class="gps-row"><div class="fld" style="flex:1;margin-bottom:0;position:relative;"><input id="inp-to" class="fi" placeholder="Začni psát adresu..." value="${F.to}"><div id="ac-to"></div></div><button id="gps-to" class="gbtn ${F.toGps?'done':''}" onclick="getGPS('to')">${F.toGps?'✓ GPS':'📍 GPS'}</button></div></div>
+    <div class="fld"><div class="flbl">Účel jízdy</div><select id="inp-purpose" class="fi"><option value="">— vyber účel —</option>${PURPOSES.map(p=>`<option value="${p}" ${F.purpose===p?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div id="purp-custom-wrap" style="display:${F.purpose==='Jiné'?'block':'none'}"><div class="fld"><div class="flbl">Upřesni</div><input id="inp-purposeCustom" class="fi" placeholder="Popiš účel..." value="${F.purposeCustom}"></div></div>
+    <div class="fld"><div class="flbl">Poznámka</div><input id="inp-note" class="fi" placeholder="Jméno klienta, agenda..." value="${F.note}"></div>
     <div class="grid2">
       <div class="fld"><div class="flbl">KM — odjezd</div><input id="inp-kmStart" class="fi" type="number" placeholder="${lastKmEnd||'42500'}" value="${F.kmStart}"></div>
       <div class="fld"><div class="flbl">KM — příjezd</div><input id="inp-kmEnd" class="fi" type="number" placeholder="42580" value="${F.kmEnd}"></div>
     </div>
-
     ${!F.kmStart&&lastKmEnd?`<div class="sug bl"><div class="sug-t bl">Poslední příjezd: <strong>${lastKmEnd} km</strong></div><button class="sug-b bl" onclick="F.kmStart='${lastKmEnd}';saveF();document.getElementById('inp-kmStart').value='${lastKmEnd}'">Použít</button></div>`:''}
-
     <div id="kmdiff" class="kmd" style="display:${km!==null?'flex':'none'}"><span class="kmd-l">Vzdálenost jízdy</span><span class="kmd-v">${km!==null?km+' km':''}</span></div>
-
-    ${!active?`
-    <button class="btn btn-o" onclick="startRide()">🚗 Zahájit jízdu (bez příjezdu)</button>
-    <button class="btn btn-y" onclick="saveFullRide()" style="margin-top:8px;">${flash?'✓ Uloženo':'✓ Zapsat celou jízdu'}</button>
-    <button class="btn btn-bl" onclick="showFuelModal(null)" style="margin-top:8px;">⛽ Zaznamenat tankování</button>
-    `:`<button class="btn btn-y" onclick="saveFullRide()" style="margin-top:8px;">✓ Zapsat novou jízdu</button>`}
-
+    ${!active?`<button class="btn btn-o" onclick="startRide()">🚗 Zahájit jízdu (bez příjezdu)</button><button class="btn btn-y" onclick="saveFullRide()" style="margin-top:7px;">${flash?'✓ Uloženo':'✓ Zapsat celou jízdu'}</button><button class="btn btn-bl" onclick="showFuelModal(null)" style="margin-top:7px;">⛽ Tankování</button>`:`<button class="btn btn-y" onclick="saveFullRide()" style="margin-top:7px;">✓ Zapsat novou jízdu</button>`}
     ${editId!==null?`<button class="btn btn-gh" onclick="editId=null;F.from='';F.to='';F.fromGps=null;F.toGps=null;F.kmEnd='';render()">Zrušit editaci</button>`:''}
   `;
 }
 
 // ── LIST VIEW ─────────────────────────────────────────────────────────────────
 function renderList(){
-  const rideItems=rides.map(r=>({...r,_t:'ride'}));
-  const fuelItems=fuels.map(f=>({...f,_t:'fuel',date:f.date||todayStr()}));
-  const stopItems=stops.map(s=>({...s,_t:'stop',date:s.date||todayStr()}));
-  const all=[...rideItems,...fuelItems,...stopItems].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
-  const src=fDriver==='all'?all:all.filter(x=>x._t!=='ride'||x.driver===fDriver);
-  const done=src.filter(x=>x._t==='ride'&&!x.inProgress);
+  const all=[
+    ...rides.map(r=>({...r,_t:'ride'})),
+    ...fuels.map(f=>({...f,_t:'fuel',date:f.date||todayStr()})),
+    ...stops.map(s=>({...s,_t:'stop',date:s.date||todayStr()}))
+  ].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  const done=rides.filter(r=>!r.inProgress);
   const totalKm=done.reduce((a,r)=>a+(r.km||0),0);
   return`
-    <div class="frow">${['all',...DRIVERS].map(d=>`<button class="fbtn ${fDriver===d?'on':''}" onclick="fDriver='${d}';render()">${d==='all'?'Všichni':d}</button>`).join('')}<button class="expbtn" onclick="exportCSV()">↓ CSV</button></div>
-    ${src.length>0?`<div class="rmeta"><span>${done.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
-    ${src.length===0?`<div class="empty">Žádné záznamy</div>`:src.map(item=>{
-      if(item._t==='stop')return`<div class="card stop"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(167,139,250,.1);color:var(--pu);font-weight:600;">🅿 ZASTÁVKA</span></div><div class="croute">${item.addr||'Poloha nezaznamenána'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div>`;
-      if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽ TANKOVÁNÍ</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:6px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ')} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}` :'</div>'}<div class="cact"><button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
-      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 8px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div><div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="cklbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div></div>${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá</div>`:''}<div class="cact">${item.inProgress?`<button class="abtn fin" onclick="showChoiceModal(rides.find(r=>r.id===${item.id}))">Akce</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>${delId===item.id?`<div class="dcf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}</div>`;
+    <div class="frow"><button class="expbtn" onclick="exportCSV()">↓ CSV</button></div>
+    ${all.length>0?`<div class="rmeta"><span>${done.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
+    ${all.length===0?`<div class="empty">Žádné záznamy</div>`:all.map(item=>{
+      if(item._t==='stop')return`<div class="card stop"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(167,139,250,.1);color:var(--pu);font-weight:600;">🅿 ZASTÁVKA</span></div><div class="croute">${item.addr||'Poloha nezaznamenána'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div>`;
+      if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters!=null?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal!=null?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:5px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ',{minimumFractionDigits:2})} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}</div>`:''}<div class="cact"><button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
+      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div><div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="cklbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div></div>${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá</div>`:''}<div class="cact">${item.inProgress?`<button class="abtn fin" onclick="showChoiceModal(rides.find(r=>r.id===${item.id}))">Akce</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>${delId===item.id?`<div class="dcf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}</div>`;
     }).join('')}
+  `;
+}
+
+// ── SOUHRNY VIEW ──────────────────────────────────────────────────────────────
+function renderSouhrny(){
+  const{from,to}=getPeriodRange(SF.period);
+  const periods=[{k:'today',l:'Dnes'},{k:'week',l:'Týden'},{k:'month',l:'Měsíc'},{k:'quarter',l:'Kvartál'},{k:'year',l:'Rok'},{k:'all',l:'Vše'},{k:'custom',l:'Vlastní'}];
+
+  // Filter rides
+  let filtRides=rides.filter(r=>!r.inProgress&&inRange(r.date,from,to));
+  if(SF.driver!=='all')filtRides=filtRides.filter(r=>r.driver===SF.driver);
+  if(SF.purpose)filtRides=filtRides.filter(r=>r.purpose===SF.purpose);
+
+  // Filter fuels
+  let filtFuels=fuels.filter(f=>inRange(f.date||'',from,to));
+
+  const totalKm=filtRides.reduce((a,r)=>a+(r.km||0),0);
+  const avgKm=filtRides.length>0?Math.round(totalKm/filtRides.length):0;
+  const totalFuel=filtFuels.reduce((a,f)=>a+(parseFloat(f.priceTotal)||0),0);
+  const totalLiters=filtFuels.reduce((a,f)=>a+(parseFloat(f.liters)||0),0);
+  const avgPricePer=totalLiters>0?(totalFuel/totalLiters):0;
+  const consumption=totalKm>0&&totalLiters>0?(totalLiters/totalKm*100):0;
+
+  // By purpose
+  const pm={};filtRides.forEach(r=>{if(!r.purpose)return;if(!pm[r.purpose])pm[r.purpose]={count:0,km:0};pm[r.purpose].count++;pm[r.purpose].km+=(r.km||0);});
+  const byP=Object.entries(pm).map(([n,v])=>({name:n,...v})).sort((a,b)=>b.km-a.km);
+
+  // By driver
+  const byD=DRIVERS.map(d=>({name:d,count:filtRides.filter(r=>r.driver===d).length,km:filtRides.filter(r=>r.driver===d).reduce((a,r)=>a+(r.km||0),0)}));
+
+  // All purposes for filter
+  const allPurposes=[...new Set(rides.map(r=>r.purpose).filter(Boolean))];
+
+  return`
+    <div class="filter-section">
+      <div class="filter-title">Období</div>
+      <div class="period-row">${periods.map(p=>`<button class="pbtn ${SF.period===p.k?'on':''}" onclick="SF.period='${p.k}';render()">${p.l}</button>`).join('')}</div>
+      ${SF.period==='custom'?`<div class="custom-range"><div class="fld" style="margin-bottom:0;"><div class="flbl">Od</div><input class="fi" type="date" value="${SF.dateFrom}" onchange="SF.dateFrom=this.value;render()"></div><div class="fld" style="margin-bottom:0;"><div class="flbl">Do</div><input class="fi" type="date" value="${SF.dateTo}" onchange="SF.dateTo=this.value;render()"></div></div>`:''}
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-title">Filtr jízd</div>
+      <div class="chip-row">
+        ${['all',...DRIVERS].map(d=>`<button class="chip ${SF.driver===d?'on':''}" onclick="SF.driver='${d}';render()">${d==='all'?'Všichni':d}</button>`).join('')}
+      </div>
+      ${allPurposes.length>0?`<div class="chip-row" style="margin-top:8px;"><button class="chip ${!SF.purpose?'on':''}" onclick="SF.purpose='';render()">Vše</button>${allPurposes.map(p=>`<button class="chip ${SF.purpose===p?'on':''}" onclick="SF.purpose='${p.replace(/'/g,"\\'")}';render()">${p}</button>`).join('')}</div>`:''}
+    </div>
+
+    <div class="sum-card">
+      <div class="sum-title">🚗 Jízdy — ${fmtD(from)} až ${fmtD(to)}</div>
+      <div class="sum-row"><span class="sum-lbl">Počet jízd</span><span class="sum-val accent">${filtRides.length}</span></div>
+      <div class="sum-row"><span class="sum-lbl">Celkem km</span><span class="sum-val accent">${totalKm.toLocaleString('cs-CZ')} km</span></div>
+      <div class="sum-row"><span class="sum-lbl">Průměr km / jízda</span><span class="sum-val">${avgKm} km</span></div>
+      ${filtRides.filter(isInc).length>0?`<div class="sum-row"><span class="sum-lbl">Neúplné záznamy</span><span class="sum-val" style="color:var(--r);">${filtRides.filter(isInc).length}</span></div>`:''}
+    </div>
+
+    ${filtFuels.length>0?`<div class="sum-card">
+      <div class="sum-title">⛽ Tankování — ${fmtD(from)} až ${fmtD(to)}</div>
+      <div class="sum-row"><span class="sum-lbl">Počet tankování</span><span class="sum-val blue">${filtFuels.length}</span></div>
+      <div class="sum-row"><span class="sum-lbl">Celkem litrů</span><span class="sum-val blue">${totalLiters.toFixed(1)} l</span></div>
+      <div class="sum-row"><span class="sum-lbl">Celková cena</span><span class="sum-val blue">${Math.round(totalFuel).toLocaleString('cs-CZ')} Kč</span></div>
+      ${avgPricePer>0?`<div class="sum-row"><span class="sum-lbl">Průměr Kč/litr</span><span class="sum-val">${avgPricePer.toFixed(2)} Kč</span></div>`:''}
+      ${consumption>0?`<div class="sum-row"><span class="sum-lbl">Průměrná spotřeba</span><span class="sum-val green">${consumption.toFixed(1)} l/100km</span></div>`:''}
+    </div>`:''}
+
+    ${byP.length>0?`<div class="sum-card"><div class="sum-title">Podle účelu</div>${byP.map(p=>`<div class="sum-row"><span class="sum-lbl" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}<br><span style="font-size:10px;color:var(--m);">${p.count}×</span></span><span class="sum-val accent" style="flex-shrink:0;margin-left:10px;">${p.km} km</span></div>`).join('')}</div>`:''}
+
+    ${byD.filter(d=>d.count>0).length>0?`<div class="sum-card"><div class="sum-title">Podle řidiče</div>${byD.filter(d=>d.count>0).map(d=>`<div class="sum-row"><span class="sum-lbl">${d.name}<br><span style="font-size:10px;color:var(--m);">${d.count} jízd</span></span><span class="sum-val accent">${d.km.toLocaleString('cs-CZ')} km</span></div>`).join('')}</div>`:''}
+
+    ${filtFuels.length>0?`<div class="sum-card"><div class="sum-title">Tankování — detail</div>${filtFuels.map(f=>`<div class="sum-row"><span class="sum-lbl">${fmtD(f.date)} ${f.station||''}<br><span style="font-size:10px;color:var(--m);">${f.liters!=null?f.liters+'l':''}${f.pricePer?' · '+f.pricePer+' Kč/l':''}</span></span><span class="sum-val blue" style="flex-shrink:0;">${f.priceTotal!=null?parseFloat(f.priceTotal).toFixed(0)+' Kč':''}</span></div>`).join('')}</div>`:''}
+
+    ${filtRides.length===0&&filtFuels.length===0?`<div class="empty">Žádné záznamy pro toto období</div>`:''}
   `;
 }
 
@@ -901,21 +893,20 @@ function renderStats(){
   `;
 }
 
-// ── SETTINGS VIEW ─────────────────────────────────────────────────────────────
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
 function renderSettings(){
   const perm=typeof Notification!=='undefined'?Notification.permission:'default';
   return`
     <div class="ic"><div class="ict">🔔 Večerní upomínky</div><div class="icb">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>${perm==='granted'?`<button class="nbt ok">✓ Povoleno</button>`:perm==='denied'?`<button class="nbt no">Blokováno — povol v Nastavení Safari</button>`:`<button class="nbt en" onclick="reqNotif()">Povolit notifikace</button>`}</div>
-    <div class="ic"><div class="ict">🚗 CarPlay automatizace</div><div class="icb"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:10px;">Odpojení:</strong><code class="o">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div></div>
+    <div class="ic"><div class="ict">🚗 CarPlay automatizace</div><div class="icb"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:8px;">Odpojení:</strong><code class="o">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div></div>
     <div class="ic"><div class="ict">📱 Přidat na plochu</div><div class="icb">Safari → Sdílet → <strong>Přidat na plochu</strong></div></div>
-    <div class="ic" style="border-color:rgba(74,222,128,.15);"><div class="ict">💾 Úložiště</div><div class="icb">Data jsou v IndexedDB — pouze v tvém telefonu. Záloha přes ↓ CSV.</div></div>
+    <div class="ic" style="border-color:rgba(74,222,128,.15);"><div class="ict">💾 Úložiště</div><div class="icb">Data jsou v IndexedDB — pouze v tvém telefonu. Záloha přes ↓ CSV v záznamu.</div></div>
   `;
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init(){
-  await openDB();await reload();
-  loadSaved();
+  await openDB();await reload();loadSaved();
   const ar=await dbGet('meta','activeRideId');activeRideId=ar?.value||null;
   const ns=await dbGet('meta','notif');
   if(ns?.value==='granted'&&typeof Notification!=='undefined'&&Notification.permission==='granted')schedNotifs();
