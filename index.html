@@ -10,256 +10,120 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #080a0f;
-  --surface: #0f1218;
-  --surface2: #161b24;
-  --border: #1e2535;
-  --border2: #252e40;
-  --text: #dde4f0;
-  --muted: #4a5570;
-  --muted2: #6a7590;
-  --accent: #e8c547;
-  --green: #4ade80;
-  --red: #f87171;
-  --blue: #60a5fa;
-  --orange: #fb923c;
-  --font: 'Syne', sans-serif;
-  --mono: 'JetBrains Mono', monospace;
+  --bg:#080a0f;--surface:#0f1218;--surface2:#161b24;--border:#1e2535;--border2:#252e40;
+  --text:#dde4f0;--muted:#4a5570;--muted2:#6a7590;--accent:#e8c547;
+  --green:#4ade80;--red:#f87171;--blue:#60a5fa;--orange:#fb923c;
+  --font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
-
-#app { min-height: 100vh; display: flex; flex-direction: column; }
-
-/* HEADER */
-.header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 16px 20px 0;
-  position: sticky; top: 0; z-index: 50;
-}
-.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.logo { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
-.app-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; margin-top: 4px; }
-.total-km { font-family: var(--mono); font-size: 30px; font-weight: 300; color: var(--accent); line-height: 1; }
-.total-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; text-align: right; margin-top: 2px; }
-
-.nav { display: flex; gap: 0; border-top: 1px solid var(--border); margin: 0 -20px; }
-.nav-btn {
-  flex: 1; padding: 12px 4px; background: none; border: none; color: var(--muted);
-  font-family: var(--font); font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
-  cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
-  text-transform: uppercase;
-}
-.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-.content { flex: 1; padding: 20px 16px 100px; max-width: 640px; margin: 0 auto; width: 100%; }
-
-/* TOAST */
-.toast {
-  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--surface2); border: 1px solid var(--border2);
-  padding: 10px 20px; border-radius: 30px; font-size: 13px; color: var(--text);
-  opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ACTIVE TRIP BANNER */
-.active-trip-banner {
-  background: linear-gradient(135deg, rgba(251,146,60,0.12), rgba(232,197,71,0.08));
-  border: 1px solid rgba(251,146,60,0.4);
-  border-radius: 14px; padding: 16px; margin-bottom: 20px;
-  animation: glow 2s ease-in-out infinite alternate;
-}
-@keyframes glow {
-  from { box-shadow: 0 0 10px rgba(251,146,60,0.1); }
-  to { box-shadow: 0 0 20px rgba(251,146,60,0.25); }
-}
-.active-trip-title { font-size: 11px; letter-spacing: 2px; color: var(--orange); text-transform: uppercase; margin-bottom: 8px; }
-.active-trip-route { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-.active-trip-meta { font-size: 12px; color: var(--muted2); }
-
-/* FIELDS */
-.field { margin-bottom: 14px; }
-.field-label { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
-.field input, .field select, .field textarea {
-  width: 100%; padding: 11px 13px;
-  background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 14px;
-  outline: none; transition: border-color 0.15s; appearance: none; -webkit-appearance: none;
-}
-.field input:focus, .field select:focus { border-color: var(--accent); }
-.field select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 13px center; padding-right: 32px;
-}
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-/* DRIVER TOGGLE */
-.driver-toggle { display: flex; gap: 8px; }
-.driver-btn {
-  flex: 1; padding: 11px; background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 8px; color: var(--muted2); font-family: var(--font); font-size: 13px;
-  font-weight: 500; cursor: pointer; transition: all 0.15s; text-align: center;
-}
-.driver-btn.active { background: rgba(232,197,71,0.1); border-color: var(--accent); color: var(--accent); }
-
-/* GPS ROW */
-.gps-row { display: flex; gap: 8px; }
-.gps-row input { flex: 1; }
-.gps-btn {
-  padding: 11px 13px; background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 8px; color: var(--muted2); font-family: var(--font); font-size: 12px;
-  cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
-}
-.gps-btn.loading { color: var(--accent); border-color: var(--accent); animation: pulse 1s infinite; }
-.gps-btn.done { color: var(--green); border-color: var(--green); }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-/* KM SUGGESTION */
-.km-suggestion {
-  background: rgba(96,165,250,0.08); border: 1px solid rgba(96,165,250,0.25);
-  border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-}
-.km-suggestion-text { font-size: 12px; color: var(--blue); flex: 1; }
-.km-suggestion-btn {
-  padding: 5px 12px; background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.3);
-  border-radius: 6px; color: var(--blue); font-size: 12px; cursor: pointer;
-  font-family: var(--font); white-space: nowrap;
-}
-
-/* KM DIFF */
-.km-diff {
-  background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2);
-  border-radius: 8px; padding: 10px 14px; display: flex; align-items: center;
-  justify-content: space-between; margin-bottom: 14px;
-}
-.km-diff-label { font-size: 11px; color: var(--muted2); }
-.km-diff-val { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--green); }
-
-/* BUTTONS */
-.submit-btn {
-  width: 100%; padding: 15px; background: var(--accent); color: var(--bg);
-  border: none; border-radius: 10px; font-family: var(--font); font-size: 15px;
-  font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s; margin-top: 6px;
-}
-.submit-btn:active { transform: scale(0.98); opacity: 0.9; }
-.submit-btn.saved { background: rgba(74,222,128,0.15); color: var(--green); }
-.submit-btn.orange { background: var(--orange); }
-.cancel-btn {
-  width: 100%; padding: 12px; background: transparent; color: var(--muted);
-  border: 1px solid var(--border2); border-radius: 10px; font-family: var(--font);
-  font-size: 13px; cursor: pointer; margin-top: 8px;
-}
-
-/* MODE BADGE */
-.mode-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
-  letter-spacing: 0.5px; margin-bottom: 16px;
-}
-.mode-badge.start { background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
-.mode-badge.end { background: rgba(251,146,60,0.1); color: var(--orange); border: 1px solid rgba(251,146,60,0.3); }
-.mode-badge.manual { background: rgba(96,165,250,0.1); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
-
-/* RECORDS */
-.filter-row { display: flex; gap: 6px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
-.filter-btn {
-  padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 20px; color: var(--muted2); font-family: var(--font); font-size: 11px;
-  font-weight: 500; cursor: pointer; transition: all 0.15s;
-}
-.filter-btn.active { background: rgba(232,197,71,0.1); border-color: var(--accent); color: var(--accent); }
-.export-btn {
-  margin-left: auto; padding: 6px 12px; background: var(--surface2);
-  border: 1px solid var(--border2); border-radius: 20px; color: var(--muted2);
-  font-family: var(--font); font-size: 11px; cursor: pointer;
-}
-.records-summary { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
-.records-summary span:last-child { font-family: var(--mono); color: var(--accent); }
-
-.record-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
-}
-.record-card.incomplete { border-left: 3px solid var(--red); }
-.record-card.in-progress { border-left: 3px solid var(--orange); }
-.record-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-.record-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
-.record-date { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
-.record-driver { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.5px; }
-.driver-d { background: rgba(96,165,250,0.1); color: var(--blue); }
-.driver-m { background: rgba(167,139,250,0.1); color: #a78bfa; }
-.record-route { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-.record-purpose { font-size: 12px; color: var(--muted2); }
-.record-note { font-size: 11px; color: var(--muted); margin-top: 3px; }
-.record-km { font-family: var(--mono); font-size: 20px; font-weight: 400; color: var(--accent); }
-.record-km-label { font-size: 9px; color: var(--muted); text-align: right; }
-.record-incomplete-badge { font-size: 10px; color: var(--red); margin-top: 6px; }
-.record-inprogress-badge { font-size: 10px; color: var(--orange); margin-top: 6px; }
-.record-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
-.action-btn {
-  padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 6px; color: var(--muted2); font-size: 11px; cursor: pointer; font-family: var(--font);
-}
-.action-btn.del { color: var(--red); border-color: rgba(248,113,113,0.2); }
-.action-btn.finish { color: var(--orange); border-color: rgba(251,146,60,0.3); }
-.delete-confirm {
-  margin-top: 10px; padding: 10px 12px;
-  background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.2);
-  border-radius: 8px; display: flex; gap: 8px; align-items: center;
-}
-.delete-confirm span { flex: 1; font-size: 12px; color: var(--red); }
-
-/* STATS */
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
-.stat-val { font-family: var(--mono); font-size: 28px; font-weight: 300; color: var(--accent); }
-.stat-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
-.section-title { font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
-.stat-row {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.stat-row-name { font-size: 13px; color: var(--muted2); }
-.stat-row-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
-.stat-row-km { font-family: var(--mono); font-size: 16px; color: var(--accent); }
-
-/* SETTINGS */
-.notif-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-.notif-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-.notif-sub { font-size: 11px; color: var(--muted2); margin-bottom: 14px; line-height: 1.6; }
-.notif-btn { width: 100%; padding: 12px; border: 1px solid var(--border2); border-radius: 8px; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-.notif-btn.enable { background: rgba(232,197,71,0.1); border-color: var(--accent); color: var(--accent); }
-.notif-btn.enabled { background: rgba(74,222,128,0.1); border-color: var(--green); color: var(--green); }
-
-.empty-state { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px; }
-.section-divider { margin: 20px 0 16px; }
-
-.incomplete-banner {
-  background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2);
-  border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
-  display: flex; align-items: center; gap: 10px; cursor: pointer;
-}
-.incomplete-banner-text { flex: 1; font-size: 13px; color: var(--red); }
-.incomplete-banner-count { font-family: var(--mono); font-size: 20px; color: var(--red); }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;}
+#app{min-height:100vh;display:flex;flex-direction:column;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px 0;position:sticky;top:0;z-index:50;}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.logo{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+.app-title{font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-top:4px;}
+.total-km{font-family:var(--mono);font-size:30px;font-weight:300;color:var(--accent);line-height:1;}
+.total-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:right;margin-top:2px;}
+.nav{display:flex;border-top:1px solid var(--border);margin:0 -20px;}
+.nav-btn{flex:1;padding:12px 4px;background:none;border:none;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.5px;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;text-transform:uppercase;}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.content{flex:1;padding:20px 16px 100px;max-width:640px;margin:0 auto;width:100%;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border2);padding:10px 20px;border-radius:30px;font-size:13px;color:var(--text);opacity:0;transition:all 0.3s;z-index:200;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.active-trip-banner{background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(232,197,71,0.06));border:1px solid rgba(251,146,60,0.4);border-radius:14px;padding:16px;margin-bottom:20px;animation:glow 2s ease-in-out infinite alternate;}
+@keyframes glow{from{box-shadow:0 0 10px rgba(251,146,60,0.1);}to{box-shadow:0 0 24px rgba(251,146,60,0.2);}}
+.active-trip-label{font-size:10px;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:8px;}
+.active-trip-route{font-size:16px;font-weight:600;margin-bottom:4px;}
+.active-trip-meta{font-size:12px;color:var(--muted2);line-height:1.6;}
+.field{margin-bottom:14px;}
+.field-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.field input,.field select{width:100%;padding:11px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color 0.15s;appearance:none;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5570' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.driver-toggle{display:flex;gap:8px;}
+.driver-btn{flex:1;padding:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;text-align:center;}
+.driver-btn.active{background:rgba(232,197,71,0.1);border-color:var(--accent);color:var(--accent);}
+.gps-row{display:flex;gap:8px;}
+.gps-row input{flex:1;}
+.gps-btn{padding:11px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-family:var(--font);font-size:12px;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
+.gps-btn.loading{color:var(--accent);border-color:var(--accent);animation:pulse 1s infinite;}
+.gps-btn.done{color:var(--green);border-color:var(--green);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+.suggestion-box{border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.suggestion-box.blue{background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);}
+.suggestion-box.green{background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);}
+.suggestion-text{font-size:12px;color:var(--blue);flex:1;line-height:1.5;}
+.suggestion-text.green{color:var(--green);}
+.suggestion-btn{padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;font-weight:600;background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.3);color:var(--blue);}
+.suggestion-btn.green{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:var(--green);}
+.km-diff{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.km-diff-label{font-size:11px;color:var(--muted2);}
+.km-diff-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--green);}
+.btn{width:100%;padding:15px;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;margin-top:8px;}
+.btn:active{transform:scale(0.98);opacity:0.9;}
+.btn-yellow{background:var(--accent);color:var(--bg);}
+.btn-orange{background:var(--orange);color:var(--bg);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.mode-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.5px;margin-bottom:16px;}
+.badge-start{background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.3);}
+.badge-end{background:rgba(251,146,60,0.1);color:var(--orange);border:1px solid rgba(251,146,60,0.3);}
+.badge-edit{background:rgba(96,165,250,0.1);color:var(--blue);border:1px solid rgba(96,165,250,0.3);}
+.filter-row{display:flex;gap:6px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.filter-btn{padding:6px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;color:var(--muted2);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.filter-btn.active{background:rgba(232,197,71,0.1);border-color:var(--accent);color:var(--accent);}
+.export-btn{margin-left:auto;padding:6px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;color:var(--muted2);font-family:var(--font);font-size:11px;cursor:pointer;}
+.records-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:12px;}
+.records-meta span:last-child{font-family:var(--mono);color:var(--accent);}
+.record-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.record-card.incomplete{border-left:3px solid var(--red);}
+.record-card.in-progress{border-left:3px solid var(--orange);}
+.rec-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.rec-meta{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+.rec-date{font-family:var(--mono);font-size:11px;color:var(--muted2);}
+.rec-driver{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.driver-d{background:rgba(96,165,250,0.1);color:var(--blue);}
+.driver-m{background:rgba(167,139,250,0.1);color:#a78bfa;}
+.rec-route{font-size:14px;font-weight:600;margin-bottom:4px;}
+.rec-purpose{font-size:12px;color:var(--muted2);}
+.rec-note{font-size:11px;color:var(--muted);margin-top:3px;}
+.rec-km{font-family:var(--mono);font-size:20px;color:var(--accent);}
+.rec-km-label{font-size:9px;color:var(--muted);text-align:right;}
+.rec-badge{font-size:10px;margin-top:5px;}
+.rec-actions{display:flex;gap:6px;margin-top:10px;justify-content:flex-end;}
+.action-btn{padding:5px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--muted2);font-size:11px;cursor:pointer;font-family:var(--font);}
+.action-btn.del{color:var(--red);border-color:rgba(248,113,113,0.2);}
+.action-btn.finish{color:var(--orange);border-color:rgba(251,146,60,0.3);}
+.del-confirm{margin-top:10px;padding:10px 12px;background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.2);border-radius:8px;display:flex;gap:8px;align-items:center;}
+.del-confirm span{flex:1;font-size:12px;color:var(--red);}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+.stat-val{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--accent);}
+.stat-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.section-title{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;margin-top:20px;}
+.stat-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.stat-row-name{font-size:13px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.stat-row-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.stat-row-km{font-family:var(--mono);font-size:16px;color:var(--accent);flex-shrink:0;margin-left:12px;}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.info-card-title{font-size:13px;font-weight:600;margin-bottom:6px;}
+.info-card-body{font-size:12px;color:var(--muted2);line-height:1.7;}
+.notif-btn{width:100%;padding:12px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;transition:all 0.2s;}
+.notif-btn.enable{background:rgba(232,197,71,0.1);border:1px solid var(--accent);color:var(--accent);}
+.notif-btn.enabled{background:rgba(74,222,128,0.1);border:1px solid var(--green);color:var(--green);}
+.notif-btn.denied-state{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);}
+code{font-family:var(--mono);font-size:11px;color:var(--accent);word-break:break-all;display:block;margin-top:4px;}
+code.orange{color:var(--orange);}
+.empty-state{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;}
+.incomplete-banner{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
     <div class="header-top">
-      <div>
-        <div class="logo">KS — Firemní vozidlo</div>
-        <div class="app-title">Kniha jízd</div>
-      </div>
-      <div>
-        <div class="total-km" id="totalKm">0</div>
-        <div class="total-label">km celkem</div>
-      </div>
+      <div><div class="logo">KS — Firemní vozidlo</div><div class="app-title">Kniha jízd</div></div>
+      <div><div class="total-km" id="totalKm">0</div><div class="total-label">km celkem</div></div>
     </div>
     <nav class="nav">
       <button class="nav-btn active" onclick="setView('add')" id="nav-add">＋ Jízda</button>
@@ -271,791 +135,269 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   <div class="content" id="content"></div>
 </div>
 <div class="toast" id="toast"></div>
-
 <script>
-// ─── DB ───────────────────────────────────────────────────────────────────────
 let db;
-const DB_NAME = 'kniha_jizd_v2', DB_VER = 1;
+function openDB(){return new Promise((res,rej)=>{const req=indexedDB.open('knjizd_v3',1);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('rides'))d.createObjectStore('rides',{keyPath:'id',autoIncrement:true});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'});};req.onsuccess=e=>{db=e.target.result;res();};req.onerror=()=>rej(req.error);});}
+const getTx=(s,m)=>db.transaction(s,m).objectStore(s);
+const dbAll=()=>new Promise((res,rej)=>{const r=getTx('rides','readonly').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej();});
+const dbPut=(s,o)=>new Promise((res,rej)=>{const r=getTx(s,'readwrite').put(o);r.onsuccess=()=>res(r.result);r.onerror=()=>rej();});
+const dbGet=(s,k)=>new Promise(res=>{const r=getTx(s,'readonly').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);});
+const dbDel=(s,k)=>new Promise((res,rej)=>{const r=getTx(s,'readwrite').delete(k);r.onsuccess=()=>res();r.onerror=()=>rej();});
 
-function openDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('rides')) {
-        const s = d.createObjectStore('rides', { keyPath: 'id', autoIncrement: true });
-        s.createIndex('date', 'date');
-      }
-      if (!d.objectStoreNames.contains('settings')) {
-        d.createObjectStore('settings', { keyPath: 'key' });
-      }
-    };
-    req.onsuccess = e => { db = e.target.result; res(db); };
-    req.onerror = () => rej(req.error);
-  });
+let rides=[],currentView='add',editId=null,deleteConfirmId=null,filterDriver='all',savedFlash=false,activeRideId=null;
+let gpsFromLoading=false,gpsToLoading=false,kmSuggestion=null;
+const DRIVERS=['David','Manželka'];
+const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Showroom Doksany','Kontrola zaměstnance','Freediving / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
+let form={};
+
+function resetForm(kmStart){
+  const lp=localStorage.getItem('lp')||'';
+  form={date:todayStr(),time:nowTime(),driver:'David',from:'',fromGps:null,to:'',toGps:null,purpose:lp,purposeCustom:'',kmStart:kmStart||'',kmEnd:'',note:''};
+  kmSuggestion=null;
 }
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function nowTime(){return new Date().toTimeString().slice(0,5);}
+function fmtDate(d){const[y,m,day]=d.split('-');return`${day}.${m}.${y}`;}
+function kmDiff(s,e){const a=parseFloat(s),b=parseFloat(e);return(!isNaN(a)&&!isNaN(b)&&b>=a)?Math.round((b-a)*10)/10:null;}
 
-function dbAll(store) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
-  });
-}
-
-function dbPut(store, obj) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).put(obj);
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
-  });
-}
-
-function dbGet(store, key) {
-  return new Promise((res) => {
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).get(key);
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => res(null);
-  });
-}
-
-function dbDelete(store, key) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).delete(key);
-    req.onsuccess = () => res();
-    req.onerror = () => rej(req.error);
-  });
-}
-
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let rides = [];
-let currentView = 'add';
-let editId = null;
-let deleteConfirmId = null;
-let filterDriver = 'all';
-let savedFlash = false;
-let activeTrip = null; // in-progress trip
-let urlAction = null; // 'start' | 'end' | null
-
-const DRIVERS = ['David', 'Manželka'];
-const PURPOSES = [
-  'Schůzka s investorem',
-  'Schůzka s klientem',
-  'Showroom Doksany',
-  'Kontrola zaměstnance',
-  'Freediving / partnerská akce',
-  'Spolupráce s e-shopem / firmou',
-  'Focení / Instagram',
-  'FreeHeating – obchodní jednání',
-  'Administrativa / účetní',
-  'Jiné',
-];
-
-let form = freshForm();
-
-function freshForm(prefillKm) {
-  const lastPurpose = localStorage.getItem('lastPurpose') || '';
-  return {
-    date: todayStr(),
-    time: nowTime(),
-    driver: 'David',
-    from: '',
-    fromGps: null,
-    to: '',
-    toGps: null,
-    purpose: lastPurpose,
-    purposeCustom: '',
-    kmStart: prefillKm || '',
-    kmEnd: '',
-    note: '',
-  };
-}
-
-function todayStr() { return new Date().toISOString().split('T')[0]; }
-function nowTime() {
-  const n = new Date();
-  return n.toTimeString().slice(0,5);
-}
-
-// ─── GPS ──────────────────────────────────────────────────────────────────────
-let gpsFromLoading = false, gpsToLoading = false;
-
-function getGPS(field) {
-  if (!navigator.geolocation) { showToast('GPS není dostupná'); return; }
-  if (field === 'from') gpsFromLoading = true;
-  else gpsToLoading = true;
+function getGPS(field){
+  if(!navigator.geolocation){showToast('GPS není dostupná');return;}
+  if(field==='from')gpsFromLoading=true;else gpsToLoading=true;
   render();
-
-  navigator.geolocation.getCurrentPosition(async pos => {
-    const { latitude: lat, longitude: lng } = pos.coords;
-    const addr = await reverseGeocode(lat, lng);
-    if (field === 'from') {
-      form.from = addr; form.fromGps = { lat, lng }; gpsFromLoading = false;
-    } else {
-      form.to = addr; form.toGps = { lat, lng }; gpsToLoading = false;
-      // If we have both GPS points, estimate distance
-      if (form.fromGps) estimateKm();
-    }
-    render();
-    showToast('📍 Poloha zaznamenána');
-  }, () => {
-    if (field === 'from') gpsFromLoading = false;
-    else gpsToLoading = false;
-    render();
-    showToast('GPS selhala — zadej adresu ručně');
-  }, { timeout: 10000, enableHighAccuracy: true });
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const{latitude:lat,longitude:lng}=pos.coords;
+    const addr=await reverseGeocode(lat,lng);
+    if(field==='from'){form.from=addr;form.fromGps={lat,lng};gpsFromLoading=false;}
+    else{form.to=addr;form.toGps={lat,lng};gpsToLoading=false;tryEstimateKm();}
+    render();showToast('📍 Poloha zaznamenána');
+  },()=>{
+    if(field==='from')gpsFromLoading=false;else gpsToLoading=false;
+    render();showToast('GPS selhala — zadej adresu ručně');
+  },{timeout:10000,enableHighAccuracy:true});
 }
 
-async function reverseGeocode(lat, lng) {
-  try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-    const d = await r.json();
-    const a = d.address;
-    const parts = [a.road, a.house_number, a.city || a.town || a.village].filter(Boolean);
-    return parts.join(' ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  } catch {
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+async function reverseGeocode(lat,lng){
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);const d=await r.json();const a=d.address;return[a.road,a.house_number,a.city||a.town||a.village].filter(Boolean).join(' ')||`${lat.toFixed(4)},${lng.toFixed(4)}`;}
+  catch{return`${lat.toFixed(4)},${lng.toFixed(4)}`;}
+}
+
+function tryEstimateKm(){
+  if(!form.fromGps||!form.toGps||!form.kmStart)return;
+  const{lat:la,lng:lo}=form.fromGps,{lat:lb,lng:lp}=form.toGps;
+  const R=6371,dLat=(lb-la)*Math.PI/180,dLng=(lp-lo)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(la*Math.PI/180)*Math.cos(lb*Math.PI/180)*Math.sin(dLng/2)**2;
+  const dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  const roadKm=Math.round(dist*1.3*1.05);
+  const base=parseFloat(form.kmStart);
+  if(!isNaN(base)&&roadKm>0)kmSuggestion=Math.round(base+roadKm);
+}
+
+async function startRide(){
+  if(!form.from){showToast('Vyplň odkud');return;}
+  const pf=form.purpose==='Jiné'?form.purposeCustom:form.purpose;
+  if(pf)localStorage.setItem('lp',pf);
+  const ride={date:form.date,time:form.time,driver:form.driver,from:form.from,fromGps:form.fromGps,to:'',toGps:null,purpose:pf||'',kmStart:form.kmStart,kmEnd:'',km:null,note:form.note,inProgress:true,createdAt:Date.now()};
+  const id=await dbPut('rides',ride);
+  activeRideId=id;
+  await dbPut('meta',{key:'activeRideId',value:id});
+  await reload();updateTotal();
+  showToast('🚗 Jízda zahájena a uložena');
+  savedFlash=true;render();setTimeout(()=>{savedFlash=false;render();},2000);
+}
+
+async function finishRide(){
+  if(!form.to){showToast('Vyplň kam');return;}
+  const id=editId||activeRideId;
+  if(!id){showToast('Nenalezena aktivní jízda');return;}
+  const existing=rides.find(r=>r.id===id);
+  if(!existing){showToast('Jízda nenalezena');return;}
+  const pf=form.purpose==='Jiné'?form.purposeCustom:form.purpose;
+  if(pf)localStorage.setItem('lp',pf);
+  const km=kmDiff(form.kmStart,form.kmEnd);
+  const updated={...existing,to:form.to,toGps:form.toGps||null,purpose:pf||existing.purpose,kmStart:form.kmStart||existing.kmStart,kmEnd:form.kmEnd,km,note:form.note||existing.note,inProgress:false};
+  await dbPut('rides',updated);
+  activeRideId=null;await dbDel('meta','activeRideId');editId=null;
+  await reload();const lastKm=form.kmEnd||'';resetForm(lastKm);
+  updateTotal();showToast('✓ Jízda dokončena');
+  savedFlash=true;render();setTimeout(()=>{savedFlash=false;render();},2000);
+}
+
+async function saveFullRide(){
+  if(!form.from||!form.to){showToast('Vyplň odkud a kam');return;}
+  const pf=form.purpose==='Jiné'?form.purposeCustom:form.purpose;
+  if(pf)localStorage.setItem('lp',pf);
+  const km=kmDiff(form.kmStart,form.kmEnd);
+  const ride={date:form.date,time:form.time,driver:form.driver,from:form.from,fromGps:form.fromGps,to:form.to,toGps:form.toGps||null,purpose:pf||'',kmStart:form.kmStart,kmEnd:form.kmEnd,km,note:form.note,inProgress:false,createdAt:Date.now()};
+  if(editId){ride.id=editId;await dbPut('rides',ride);editId=null;}else await dbPut('rides',ride);
+  const lastKm=form.kmEnd||'';await reload();resetForm(lastKm);
+  updateTotal();showToast('✓ Jízda uložena');
+  savedFlash=true;render();setTimeout(()=>{savedFlash=false;render();},2000);
+}
+
+async function openFinish(id){
+  const r=rides.find(x=>x.id===id);if(!r)return;
+  editId=id;
+  form={date:r.date,time:r.time||nowTime(),driver:r.driver,from:r.from,fromGps:r.fromGps||null,to:'',toGps:null,purpose:PURPOSES.includes(r.purpose)?r.purpose:(r.purpose?'Jiné':''),purposeCustom:PURPOSES.includes(r.purpose)?'':(r.purpose||''),kmStart:r.kmStart||'',kmEnd:'',note:r.note||''};
+  kmSuggestion=null;setView('add');
+  setTimeout(()=>getGPS('to'),600);showToast('🏁 Zaznamenávám příjezd...');
+}
+
+async function editRide(id){
+  const r=rides.find(x=>x.id===id);if(!r)return;
+  form={date:r.date,time:r.time||nowTime(),driver:r.driver,from:r.from,fromGps:r.fromGps||null,to:r.to,toGps:r.toGps||null,purpose:PURPOSES.includes(r.purpose)?r.purpose:(r.purpose?'Jiné':''),purposeCustom:PURPOSES.includes(r.purpose)?'':(r.purpose||''),kmStart:r.kmStart||'',kmEnd:r.kmEnd||'',note:r.note||''};
+  kmSuggestion=null;editId=id;setView('add');
+}
+
+async function deleteRide(id){
+  if(activeRideId===id){activeRideId=null;await dbDel('meta','activeRideId');}
+  await dbDel('rides',id);await reload();updateTotal();deleteConfirmId=null;render();showToast('Smazáno');
+}
+
+async function reload(){rides=await dbAll();rides.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));}
+
+function updateTotal(){const t=rides.filter(r=>!r.inProgress).reduce((a,r)=>a+(r.km||0),0);const el=document.getElementById('totalKm');if(el)el.textContent=t.toLocaleString('cs-CZ');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function isIncomplete(r){return!r.inProgress&&(!r.purpose||!r.kmStart||!r.kmEnd||!r.from||!r.to);}
+function exportCSV(){const src=filterDriver==='all'?rides:rides.filter(r=>r.driver===filterDriver);const hdr='Datum;Čas;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';const rows=src.map(r=>[r.date,r.time||'',r.driver,r.from,r.to,r.purpose,r.kmStart,r.kmEnd,r.km??'',r.note??''].join(';'));const blob=new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`kniha-jizd-${todayStr()}.csv`;a.click();}
+
+async function handleUrlAction(action){
+  const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
+  if(action==='start'){
+    const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
+    resetForm(lastKm);setView('add');setTimeout(()=>getGPS('from'),600);showToast('🚗 Start — zaznamenávám polohu...');
+  }else if(action==='end'){
+    const active=rides.find(r=>r.inProgress);
+    if(active)await openFinish(active.id);else{resetForm('');setView('add');showToast('Žádná aktivní jízda');}
   }
 }
 
-// ─── DISTANCE ESTIMATION ──────────────────────────────────────────────────────
-let kmSuggestion = null;
-
-async function estimateKm() {
-  if (!form.fromGps || !form.toGps) return;
-  const { lat: lat1, lng: lng1 } = form.fromGps;
-  const { lat: lat2, lng: lng2 } = form.toGps;
-  // Haversine formula for straight-line distance, multiply by 1.3 for road estimate
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const roadEstimate = Math.round(dist * 1.3);
-  
-  if (form.kmStart && roadEstimate > 0) {
-    kmSuggestion = Math.round(parseFloat(form.kmStart) + roadEstimate);
-  }
+async function requestNotifications(){
+  if(!('Notification' in window)){showToast('Notifikace nejsou podporovány');return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted'){await dbPut('meta',{key:'notif',value:'granted'});scheduleNotifs();showToast('✓ Notifikace povoleny');}
   render();
 }
+function scheduleNotifs(){[19,20,21].forEach(h=>{const t=new Date();t.setHours(h,0,0,0);if(t>new Date())setTimeout(()=>checkNotif(h),t-new Date());});}
+function checkNotif(h){const bad=rides.filter(r=>r.date===todayStr()&&(isIncomplete(r)||r.inProgress));if(bad.length>0&&Notification.permission==='granted')new Notification('Kniha jízd',{body:`${bad.length} jízda čeká na doplnění.`});const n=new Date();n.setDate(n.getDate()+1);n.setHours(h,0,0,0);setTimeout(()=>checkNotif(h),n-new Date());}
 
-function acceptKmSuggestion() {
-  if (kmSuggestion) {
-    form.kmEnd = String(kmSuggestion);
-    kmSuggestion = null;
-    render();
-  }
-}
+function setView(v){currentView=v;deleteConfirmId=null;document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+v)?.classList.add('active');render();}
 
-// ─── ACTIVE TRIP ──────────────────────────────────────────────────────────────
-async function loadActiveTrip() {
-  const s = await dbGet('settings', 'activeTrip');
-  activeTrip = s ? s.value : null;
-}
+function render(){const c=document.getElementById('content');if(!c)return;if(currentView==='add')c.innerHTML=renderAdd();else if(currentView==='list')c.innerHTML=renderList();else if(currentView==='stats')c.innerHTML=renderStats();else if(currentView==='settings')c.innerHTML=renderSettings();}
 
-async function saveActiveTrip(trip) {
-  activeTrip = trip;
-  if (trip) {
-    await dbPut('settings', { key: 'activeTrip', value: trip });
-  } else {
-    await dbDelete('settings', 'activeTrip');
-  }
-}
-
-// ─── URL ACTION ───────────────────────────────────────────────────────────────
-function detectUrlAction() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('action'); // 'start' | 'end' | null
-}
-
-async function handleUrlAction(action) {
-  if (action === 'start') {
-    // Auto-fill form for start
-    const lastKmEnd = rides.length > 0
-      ? (rides.find(r => r.kmEnd)?.kmEnd || '')
-      : '';
-    form = freshForm(lastKmEnd);
-    form.date = todayStr();
-    form.time = nowTime();
-    // Auto-trigger GPS for "from"
-    setTimeout(() => getGPS('from'), 800);
-    setView('add');
-    showToast('🚗 Start jízdy — zaznamenávám polohu...');
-  } else if (action === 'end') {
-    if (activeTrip) {
-      // Fill in end data for active trip
-      form = {
-        ...activeTrip,
-        to: '',
-        toGps: null,
-        kmEnd: '',
-      };
-      editId = activeTrip.id || null;
-      setTimeout(() => getGPS('to'), 800);
-      setView('add');
-      showToast('🏁 Konec jízdy — zaznamenávám polohu příjezdu...');
-    } else {
-      // No active trip — just open normally
-      setView('add');
-      showToast('Žádná rozdělaná jízda — vytvoř novou');
-    }
-  }
-  // Clear URL param without reload
-  const url = new URL(window.location);
-  url.searchParams.delete('action');
-  window.history.replaceState({}, '', url);
-}
-
-// ─── CRUD ─────────────────────────────────────────────────────────────────────
-async function saveRide(asActive) {
-  const purposeFinal = form.purpose === 'Jiné' ? form.purposeCustom : form.purpose;
-  if (!form.from) { showToast('Vyplň odkud'); return; }
-
-  const km = kmDiff(form.kmStart, form.kmEnd);
-  const ride = {
-    date: form.date,
-    time: form.time,
-    driver: form.driver,
-    from: form.from,
-    fromGps: form.fromGps,
-    to: form.to || '',
-    toGps: form.toGps || null,
-    purpose: purposeFinal || '',
-    kmStart: form.kmStart,
-    kmEnd: form.kmEnd,
-    km: km,
-    note: form.note,
-    inProgress: asActive || false,
-    createdAt: Date.now(),
-  };
-
-  if (purposeFinal) localStorage.setItem('lastPurpose', purposeFinal);
-
-  let savedId;
-  if (editId !== null) {
-    ride.id = editId;
-    await dbPut('rides', ride);
-    savedId = editId;
-    editId = null;
-  } else {
-    const id = await dbPut('rides', ride);
-    savedId = id;
-  }
-
-  if (asActive) {
-    ride.id = savedId;
-    await saveActiveTrip(ride);
-    showToast('🚗 Jízda zahájena — uložena jako aktivní');
-  } else {
-    await saveActiveTrip(null);
-    showToast('✓ Jízda uložena');
-  }
-
-  rides = await dbAll('rides');
-  rides.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt||0) - (a.createdAt||0));
-  form = freshForm(ride.kmEnd || '');
-  kmSuggestion = null;
-  savedFlash = true;
-  updateTotal();
-  render();
-  setTimeout(() => { savedFlash = false; render(); }, 2000);
-}
-
-async function finishActiveTrip() {
-  if (!activeTrip) return;
-  editId = activeTrip.id;
-  form = {
-    date: activeTrip.date,
-    time: activeTrip.time,
-    driver: activeTrip.driver,
-    from: activeTrip.from,
-    fromGps: activeTrip.fromGps,
-    to: '',
-    toGps: null,
-    purpose: activeTrip.purpose,
-    purposeCustom: '',
-    kmStart: activeTrip.kmStart,
-    kmEnd: '',
-    note: activeTrip.note || '',
-  };
-  setTimeout(() => getGPS('to'), 500);
-  setView('add');
-  showToast('🏁 Doplň příjezd');
-}
-
-async function deleteRide(id) {
-  if (activeTrip && activeTrip.id === id) await saveActiveTrip(null);
-  await dbDelete('rides', id);
-  rides = await dbAll('rides');
-  rides.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt||0) - (a.createdAt||0));
-  deleteConfirmId = null;
-  updateTotal();
-  render();
-  showToast('Záznam smazán');
-}
-
-function editRide(id) {
-  const r = rides.find(x => x.id === id);
-  if (!r) return;
-  form = {
-    date: r.date,
-    time: r.time || nowTime(),
-    driver: r.driver,
-    from: r.from,
-    fromGps: r.fromGps || null,
-    to: r.to,
-    toGps: r.toGps || null,
-    purpose: PURPOSES.includes(r.purpose) ? r.purpose : (r.purpose ? 'Jiné' : ''),
-    purposeCustom: PURPOSES.includes(r.purpose) ? '' : (r.purpose || ''),
-    kmStart: r.kmStart || '',
-    kmEnd: r.kmEnd || '',
-    note: r.note || '',
-  };
-  editId = id;
-  kmSuggestion = null;
-  setView('add');
-}
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-function kmDiff(s, e) {
-  const a = parseFloat(s), b = parseFloat(e);
-  if (isNaN(a) || isNaN(b) || b < a) return null;
-  return Math.round((b - a) * 10) / 10;
-}
-
-function formatDate(d) {
-  const [y, m, day] = d.split('-');
-  return `${day}.${m}.${y}`;
-}
-
-function updateTotal() {
-  const total = rides.filter(r => !r.inProgress).reduce((a, r) => a + (r.km || 0), 0);
-  document.getElementById('totalKm').textContent = total.toLocaleString('cs-CZ');
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-function isIncomplete(r) {
-  return !r.inProgress && (!r.purpose || !r.kmStart || !r.kmEnd || !r.from || !r.to);
-}
-
-function exportCSV() {
-  const src = filterDriver === 'all' ? rides : rides.filter(r => r.driver === filterDriver);
-  const header = 'Datum;Čas;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';
-  const rows = src.map(r =>
-    [r.date, r.time||'', r.driver, r.from, r.to, r.purpose, r.kmStart, r.kmEnd, r.km??'', r.note??''].join(';')
-  );
-  const csv = [header, ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `kniha-jizd-${todayStr()}.csv`;
-  a.click();
-}
-
-// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
-async function requestNotifications() {
-  if (!('Notification' in window)) { showToast('Notifikace nejsou podporovány'); return; }
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    await dbPut('settings', { key: 'notif', value: 'granted' });
-    scheduleNotifications();
-    showToast('✓ Notifikace povoleny');
-  }
-  render();
-}
-
-function scheduleNotifications() {
-  [19, 20, 21].forEach(h => {
-    const now = new Date();
-    const target = new Date();
-    target.setHours(h, 0, 0, 0);
-    if (target > now) {
-      setTimeout(() => checkAndNotify(h), target - now);
-    }
-  });
-}
-
-async function checkAndNotify(hour) {
-  const todayS = todayStr();
-  const incomplete = rides.filter(r => r.date === todayS && (isIncomplete(r) || r.inProgress));
-  if (incomplete.length > 0 && Notification.permission === 'granted') {
-    new Notification('Kniha jízd', {
-      body: `Máš ${incomplete.length} nezaznamenanou jízdu — doplň chybějící údaje.`,
-    });
-  }
-  const next = new Date();
-  next.setDate(next.getDate() + 1);
-  next.setHours(hour, 0, 0, 0);
-  setTimeout(() => checkAndNotify(hour), next - new Date());
-}
-
-// ─── VIEWS ────────────────────────────────────────────────────────────────────
-function setView(v) {
-  currentView = v;
-  deleteConfirmId = null;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('nav-' + v);
-  if (btn) btn.classList.add('active');
-  render();
-}
-
-function render() {
-  const c = document.getElementById('content');
-  if (currentView === 'add') c.innerHTML = renderAdd();
-  else if (currentView === 'list') c.innerHTML = renderList();
-  else if (currentView === 'stats') c.innerHTML = renderStats();
-  else if (currentView === 'settings') c.innerHTML = renderSettings();
-}
-
-// ─── ADD VIEW ─────────────────────────────────────────────────────────────────
-function renderAdd() {
-  const km = kmDiff(form.kmStart, form.kmEnd);
-  const incompleteToday = rides.filter(r => r.date === todayStr() && isIncomplete(r));
-  const isEndMode = editId !== null && activeTrip && activeTrip.id === editId;
-  const isStartMode = urlAction === 'start' && !editId;
-  const mode = isEndMode ? 'end' : (editId ? 'edit' : 'start');
-
-  // Last completed km
-  const completedRides = rides.filter(r => r.kmEnd && !r.inProgress);
-  const lastKmEnd = completedRides.length > 0 ? completedRides[0].kmEnd : null;
-  const showKmPrefill = !form.kmStart && lastKmEnd;
-
-  return `
-    ${activeTrip && mode !== 'end' ? `
-    <div class="active-trip-banner">
-      <div class="active-trip-title">🚗 Aktivní jízda</div>
-      <div class="active-trip-route">${activeTrip.from || '?'} → ...</div>
-      <div class="active-trip-meta">${activeTrip.driver} · ${formatDate(activeTrip.date)} ${activeTrip.time||''} · ${activeTrip.purpose || 'účel nevyplněn'}</div>
-      <button class="submit-btn orange" style="margin-top:12px;" onclick="finishActiveTrip()">🏁 Dokončit tuto jízdu</button>
-    </div>` : ''}
-
-    ${incompleteToday.length > 0 ? `
-    <div class="incomplete-banner" onclick="setView('list')">
-      <div class="incomplete-banner-text">Dnešní neúplné záznamy</div>
-      <div class="incomplete-banner-count">${incompleteToday.length}</div>
-    </div>` : ''}
-
-    <div class="mode-badge ${mode === 'end' ? 'end' : mode === 'edit' ? 'manual' : 'start'}">
-      ${mode === 'end' ? '🏁 Konec jízdy' : mode === 'edit' ? '✏ Úprava záznamu' : '🚗 Nová jízda'}
-    </div>
-
-    <div class="field">
-      <div class="field-label">Datum</div>
-      <input type="date" value="${form.date}" onchange="form.date=this.value">
-    </div>
-
-    <div class="field">
-      <div class="field-label">Řidič</div>
-      <div class="driver-toggle">
-        ${DRIVERS.map(d => `<button class="driver-btn ${form.driver===d?'active':''}" onclick="form.driver='${d}';render()">${d}</button>`).join('')}
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="field-label">Odkud</div>
-      <div class="gps-row">
-        <input placeholder="Adresa odjezdu" value="${form.from}" oninput="form.from=this.value">
-        <button class="gps-btn ${gpsFromLoading?'loading':form.fromGps?'done':''}" onclick="getGPS('from')">
-          ${gpsFromLoading ? '⟳' : form.fromGps ? '✓ GPS' : '📍 GPS'}
-        </button>
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="field-label">Kam</div>
-      <div class="gps-row">
-        <input placeholder="Adresa příjezdu" value="${form.to}" oninput="form.to=this.value;kmSuggestion=null;">
-        <button class="gps-btn ${gpsToLoading?'loading':form.toGps?'done':''}" onclick="getGPS('to')">
-          ${gpsToLoading ? '⟳' : form.toGps ? '✓ GPS' : '📍 GPS'}
-        </button>
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="field-label">Účel jízdy</div>
-      <select onchange="form.purpose=this.value;render()">
-        <option value="">— vyber účel —</option>
-        ${PURPOSES.map(p => `<option value="${p}" ${form.purpose===p?'selected':''}>${p}</option>`).join('')}
-      </select>
-    </div>
-
-    ${form.purpose === 'Jiné' ? `
-    <div class="field">
-      <div class="field-label">Upřesni účel</div>
-      <input placeholder="Popiš účel..." value="${form.purposeCustom}" oninput="form.purposeCustom=this.value">
-    </div>` : ''}
-
+function renderAdd(){
+  const activeRide=rides.find(r=>r.inProgress);
+  const isEndMode=editId!==null&&activeRide&&activeRide.id===editId;
+  const km=kmDiff(form.kmStart,form.kmEnd);
+  const lastKmEnd=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||null;
+  const showKmPrefill=!form.kmStart&&lastKmEnd;
+  const incompleteToday=rides.filter(r=>r.date===todayStr()&&isIncomplete(r));
+  let badgeHtml='',actionBtn='';
+  if(isEndMode){badgeHtml=`<div class="mode-badge badge-end">🏁 Ukončení jízdy</div>`;actionBtn=`<button class="btn btn-orange" onclick="finishRide()">${savedFlash?'✓ Uloženo':'🏁 Dokončit jízdu'}</button>`;}
+  else if(editId){badgeHtml=`<div class="mode-badge badge-edit">✏ Úprava záznamu</div>`;actionBtn=`<button class="btn btn-yellow" onclick="saveFullRide()">${savedFlash?'✓ Uloženo':'Uložit změny'}</button>`;}
+  else{badgeHtml=`<div class="mode-badge badge-start">🚗 Nová jízda</div>`;actionBtn=`<button class="btn btn-orange" onclick="startRide()">🚗 Zahájit jízdu (bez příjezdu)</button><button class="btn btn-yellow" onclick="saveFullRide()" style="margin-top:8px;">${savedFlash?'✓ Uloženo':'✓ Zapsat celou jízdu'}</button>`;}
+  return`
+    ${activeRide&&!isEndMode?`<div class="active-trip-banner"><div class="active-trip-label">🚗 Probíhající jízda</div><div class="active-trip-route">${activeRide.from} → ...</div><div class="active-trip-meta">${activeRide.driver} · ${fmtDate(activeRide.date)} ${activeRide.time||''}<br>${activeRide.purpose||'<span style="color:var(--orange)">účel nevyplněn</span>'}${activeRide.kmStart?' · start: '+activeRide.kmStart+' km':''}</div><button class="btn btn-orange" style="margin-top:12px;" onclick="openFinish(${activeRide.id})">🏁 Dokončit tuto jízdu</button></div>`:''}
+    ${incompleteToday.length>0?`<div class="incomplete-banner" onclick="setView('list')"><span style="flex:1;font-size:13px;color:var(--red);">Dnešní neúplné záznamy</span><span style="font-family:var(--mono);font-size:20px;color:var(--red);">${incompleteToday.length}</span></div>`:''}
+    ${badgeHtml}
+    <div class="field"><div class="field-label">Datum</div><input type="date" value="${form.date}" onchange="form.date=this.value"></div>
+    <div class="field"><div class="field-label">Čas odjezdu</div><input type="time" value="${form.time}" onchange="form.time=this.value"></div>
+    <div class="field"><div class="field-label">Řidič</div><div class="driver-toggle">${DRIVERS.map(d=>`<button class="driver-btn ${form.driver===d?'active':''}" onclick="form.driver='${d}';render()">${d}</button>`).join('')}</div></div>
+    <div class="field"><div class="field-label">Odkud</div><div class="gps-row"><input placeholder="Adresa odjezdu" value="${form.from}" oninput="form.from=this.value"><button class="gps-btn ${gpsFromLoading?'loading':form.fromGps?'done':''}" onclick="getGPS('from')">${gpsFromLoading?'⟳':form.fromGps?'✓ GPS':'📍 GPS'}</button></div></div>
+    <div class="field"><div class="field-label">Kam</div><div class="gps-row"><input placeholder="Adresa příjezdu" value="${form.to}" oninput="form.to=this.value;kmSuggestion=null;"><button class="gps-btn ${gpsToLoading?'loading':form.toGps?'done':''}" onclick="getGPS('to')">${gpsToLoading?'⟳':form.toGps?'✓ GPS':'📍 GPS'}</button></div></div>
+    <div class="field"><div class="field-label">Účel jízdy</div><select onchange="form.purpose=this.value;render()"><option value="">— vyber účel —</option>${PURPOSES.map(p=>`<option value="${p}" ${form.purpose===p?'selected':''}>${p}</option>`).join('')}</select></div>
+    ${form.purpose==='Jiné'?`<div class="field"><div class="field-label">Upřesni účel</div><input placeholder="Popiš účel..." value="${form.purposeCustom}" oninput="form.purposeCustom=this.value"></div>`:''}
+    <div class="field"><div class="field-label">Poznámka (volitelné)</div><input placeholder="Jméno klienta, agenda..." value="${form.note}" oninput="form.note=this.value"></div>
     <div class="grid2">
-      <div class="field">
-        <div class="field-label">KM — odjezd</div>
-        <input type="number" placeholder="${lastKmEnd ? lastKmEnd : '42 500'}" value="${form.kmStart}"
-          oninput="form.kmStart=this.value;kmSuggestion=null;render()">
-      </div>
-      <div class="field">
-        <div class="field-label">KM — příjezd</div>
-        <input type="number" placeholder="42 580" value="${form.kmEnd}"
-          oninput="form.kmEnd=this.value;render()">
-      </div>
+      <div class="field"><div class="field-label">KM — odjezd</div><input type="number" placeholder="${lastKmEnd||'42500'}" value="${form.kmStart}" oninput="form.kmStart=this.value;kmSuggestion=null;render()"></div>
+      <div class="field"><div class="field-label">KM — příjezd</div><input type="number" placeholder="42580" value="${form.kmEnd}" oninput="form.kmEnd=this.value;render()"></div>
     </div>
-
-    ${showKmPrefill ? `
-    <div class="km-suggestion">
-      <div class="km-suggestion-text">Poslední příjezd byl <strong>${lastKmEnd} km</strong> — použít jako start?</div>
-      <button class="km-suggestion-btn" onclick="form.kmStart='${lastKmEnd}';render()">Použít</button>
-    </div>` : ''}
-
-    ${kmSuggestion !== null && !form.kmEnd ? `
-    <div class="km-suggestion">
-      <div class="km-suggestion-text">Odhadovaný příjezd (dle GPS trasy): <strong>${kmSuggestion} km</strong></div>
-      <button class="km-suggestion-btn" onclick="acceptKmSuggestion()">Použít</button>
-    </div>` : ''}
-
-    ${km !== null ? `
-    <div class="km-diff">
-      <span class="km-diff-label">Vzdálenost jízdy</span>
-      <span class="km-diff-val">${km} km</span>
-    </div>` : ''}
-
-    <div class="field">
-      <div class="field-label">Poznámka (volitelné)</div>
-      <input placeholder="Jméno klienta, agenda..." value="${form.note}" oninput="form.note=this.value">
-    </div>
-
-    ${mode !== 'end' && !editId ? `
-    <button class="submit-btn orange" onclick="saveRide(true)" style="margin-top:6px;">
-      🚗 Zahájit jízdu (bez příjezdu)
-    </button>` : ''}
-
-    <button class="submit-btn ${savedFlash?'saved':''}" onclick="saveRide(false)" style="margin-top:8px;">
-      ${savedFlash ? '✓ Uloženo' : mode === 'end' ? '🏁 Dokončit jízdu' : editId ? 'Uložit změny' : '✓ Zapsat celou jízdu'}
-    </button>
-
-    ${editId !== null ? `
-    <button class="cancel-btn" onclick="editId=null;form=freshForm();kmSuggestion=null;render()">Zrušit editaci</button>` : ''}
+    ${showKmPrefill?`<div class="suggestion-box blue"><div class="suggestion-text">Poslední příjezd: <strong>${lastKmEnd} km</strong> — použít jako start?</div><button class="suggestion-btn" onclick="form.kmStart='${lastKmEnd}';render()">Použít</button></div>`:''}
+    ${kmSuggestion!==null&&!form.kmEnd?`<div class="suggestion-box green"><div class="suggestion-text green">Odhadovaný příjezd (GPS +5%): <strong>${kmSuggestion} km</strong></div><button class="suggestion-btn green" onclick="form.kmEnd='${kmSuggestion}';kmSuggestion=null;render()">Použít</button></div>`:''}
+    ${km!==null?`<div class="km-diff"><span class="km-diff-label">Vzdálenost jízdy</span><span class="km-diff-val">${km} km</span></div>`:''}
+    ${actionBtn}
+    ${editId!==null?`<button class="btn btn-ghost" onclick="editId=null;resetForm('');render()">Zrušit editaci</button>`:''}
   `;
 }
 
-// ─── LIST VIEW ────────────────────────────────────────────────────────────────
-function renderList() {
-  const src = (filterDriver === 'all' ? rides : rides.filter(r => r.driver === filterDriver));
-  const completedSrc = src.filter(r => !r.inProgress);
-  const totalKmFiltered = completedSrc.reduce((a, r) => a + (r.km || 0), 0);
-
-  return `
-    <div class="filter-row">
-      ${['all', ...DRIVERS].map(d => `
-        <button class="filter-btn ${filterDriver===d?'active':''}" onclick="filterDriver='${d}';render()">
-          ${d === 'all' ? 'Všichni' : d}
-        </button>`).join('')}
-      <button class="export-btn" onclick="exportCSV()">↓ CSV</button>
-    </div>
-
-    ${src.length > 0 ? `
-    <div class="records-summary">
-      <span>${completedSrc.length} jízd</span>
-      <span>${totalKmFiltered.toLocaleString('cs-CZ')} km</span>
-    </div>` : ''}
-
-    ${src.length === 0
-      ? `<div class="empty-state">Žádné záznamy</div>`
-      : src.map(r => `
-        <div class="record-card ${r.inProgress ? 'in-progress' : isIncomplete(r) ? 'incomplete' : ''}">
-          <div class="record-card-top">
-            <div style="flex:1;min-width:0;">
-              <div class="record-meta">
-                <span class="record-date">${formatDate(r.date)}${r.time ? ' ' + r.time : ''}</span>
-                <span class="record-driver ${r.driver==='David'?'driver-d':'driver-m'}">${r.driver}</span>
-                ${r.inProgress ? '<span style="font-size:9px;color:var(--orange);background:rgba(251,146,60,0.1);padding:2px 8px;border-radius:20px;">AKTIVNÍ</span>' : ''}
-              </div>
-              <div class="record-route">${r.from || '?'} → ${r.to || '...'}</div>
-              <div class="record-purpose">${r.purpose || '<span style="color:var(--red)">Účel chybí</span>'}</div>
-              ${r.note ? `<div class="record-note">${r.note}</div>` : ''}
-              ${r.inProgress ? `<div class="record-inprogress-badge">⏳ Jízda probíhá — chybí příjezd</div>` : ''}
-              ${isIncomplete(r) ? `<div class="record-incomplete-badge">⚠ Chybí: ${[
-                !r.purpose && 'účel',
-                !r.kmStart && 'KM start',
-                !r.kmEnd && 'KM konec',
-              ].filter(Boolean).join(', ')}</div>` : ''}
-            </div>
-            <div style="flex-shrink:0;margin-left:12px;text-align:right;">
-              ${r.km != null ? `<div class="record-km">${r.km}</div><div class="record-km-label">km</div>` : '<div style="color:var(--muted);font-size:12px;">—</div>'}
-            </div>
-          </div>
-          <div class="record-actions">
-            ${r.inProgress ? `<button class="action-btn finish" onclick="finishActiveTrip()">🏁 Dokončit</button>` : ''}
-            <button class="action-btn" onclick="editRide(${r.id})">✏ Upravit</button>
-            <button class="action-btn del" onclick="deleteConfirmId=${r.id};render()">🗑</button>
-          </div>
-          ${deleteConfirmId === r.id ? `
-          <div class="delete-confirm">
-            <span>Smazat tento záznam?</span>
-            <button class="action-btn del" onclick="deleteRide(${r.id})">Smazat</button>
-            <button class="action-btn" onclick="deleteConfirmId=null;render()">Zrušit</button>
-          </div>` : ''}
-        </div>`).join('')}
-  `;
-}
-
-// ─── STATS VIEW ───────────────────────────────────────────────────────────────
-function renderStats() {
-  const completed = rides.filter(r => !r.inProgress);
-  const total = completed.reduce((a, r) => a + (r.km || 0), 0);
-  const incomplete = rides.filter(isIncomplete).length;
-  const inProgress = rides.filter(r => r.inProgress).length;
-
-  const byDriver = DRIVERS.map(d => ({
-    name: d,
-    count: completed.filter(r => r.driver === d).length,
-    km: completed.filter(r => r.driver === d).reduce((a, r) => a + (r.km || 0), 0),
-  }));
-
-  const purposeMap = {};
-  completed.forEach(r => {
-    if (!r.purpose) return;
-    if (!purposeMap[r.purpose]) purposeMap[r.purpose] = { count: 0, km: 0 };
-    purposeMap[r.purpose].count++;
-    purposeMap[r.purpose].km += (r.km || 0);
-  });
-  const byPurpose = Object.entries(purposeMap)
-    .map(([name, v]) => ({ name, ...v }))
-    .sort((a, b) => b.km - a.km);
-
-  return `
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val">${completed.length}</div>
-        <div class="stat-label">Jízdy celkem</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${total.toLocaleString('cs-CZ')}</div>
-        <div class="stat-label">KM celkem</div>
-      </div>
-      ${inProgress > 0 ? `
-      <div class="stat-card" style="border-color:rgba(251,146,60,0.3);">
-        <div class="stat-val" style="color:var(--orange);">${inProgress}</div>
-        <div class="stat-label">Aktivní jízdy</div>
-      </div>` : ''}
-      ${incomplete > 0 ? `
-      <div class="stat-card" style="border-color:rgba(248,113,113,0.3);">
-        <div class="stat-val" style="color:var(--red);font-size:22px;">${incomplete}</div>
-        <div class="stat-label">Neúplné záznamy</div>
-      </div>` : `
-      <div class="stat-card" style="border-color:rgba(74,222,128,0.2);">
-        <div class="stat-val" style="color:var(--green);font-size:18px;">✓</div>
-        <div class="stat-label">Vše vyplněno</div>
-      </div>`}
-    </div>
-
-    <div class="section-divider">
-      <div class="section-title">Podle řidiče</div>
-      ${byDriver.map(d => `
-        <div class="stat-row">
-          <div>
-            <div class="stat-row-name">${d.name}</div>
-            <div class="stat-row-sub">${d.count} jízd</div>
-          </div>
-          <div class="stat-row-km">${d.km.toLocaleString('cs-CZ')} km</div>
-        </div>`).join('')}
-    </div>
-
-    ${byPurpose.length > 0 ? `
-    <div class="section-divider">
-      <div class="section-title">Podle účelu</div>
-      ${byPurpose.map(p => `
-        <div class="stat-row">
+function renderList(){
+  const src=filterDriver==='all'?rides:rides.filter(r=>r.driver===filterDriver);
+  const done=src.filter(r=>!r.inProgress);
+  const totalKm=done.reduce((a,r)=>a+(r.km||0),0);
+  return`
+    <div class="filter-row">${['all',...DRIVERS].map(d=>`<button class="filter-btn ${filterDriver===d?'active':''}" onclick="filterDriver='${d}';render()">${d==='all'?'Všichni':d}</button>`).join('')}<button class="export-btn" onclick="exportCSV()">↓ CSV</button></div>
+    ${src.length>0?`<div class="records-meta"><span>${done.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
+    ${src.length===0?`<div class="empty-state">Žádné záznamy</div>`:src.map(r=>`
+      <div class="record-card ${r.inProgress?'in-progress':isIncomplete(r)?'incomplete':''}">
+        <div class="rec-top">
           <div style="flex:1;min-width:0;">
-            <div class="stat-row-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
-            <div class="stat-row-sub">${p.count}×</div>
+            <div class="rec-meta"><span class="rec-date">${fmtDate(r.date)}${r.time?' '+r.time:''}</span><span class="rec-driver ${r.driver==='David'?'driver-d':'driver-m'}">${r.driver}</span>${r.inProgress?'<span style="font-size:9px;color:var(--orange);background:rgba(251,146,60,0.1);padding:2px 8px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div>
+            <div class="rec-route">${r.from||'?'} → ${r.to||'...'}</div>
+            <div class="rec-purpose">${r.purpose||'<span style="color:var(--red)">Účel chybí</span>'}</div>
+            ${r.note?`<div class="rec-note">${r.note}</div>`:''}
+            ${r.inProgress?`<div class="rec-badge" style="color:var(--orange);">⏳ Probíhá — chybí příjezd</div>`:''}
+            ${isIncomplete(r)?`<div class="rec-badge" style="color:var(--red);">⚠ Chybí: ${[!r.purpose&&'účel',!r.kmStart&&'KM start',!r.kmEnd&&'KM konec'].filter(Boolean).join(', ')}</div>`:''}
           </div>
-          <div class="stat-row-km" style="margin-left:12px;flex-shrink:0;">${p.km} km</div>
-        </div>`).join('')}
-    </div>` : ''}
+          <div style="flex-shrink:0;margin-left:12px;text-align:right;">${r.km!=null?`<div class="rec-km">${r.km}</div><div class="rec-km-label">km</div>`:'<div style="color:var(--muted);font-size:12px;">—</div>'}</div>
+        </div>
+        <div class="rec-actions">${r.inProgress?`<button class="action-btn finish" onclick="openFinish(${r.id})">🏁 Dokončit</button>`:''}<button class="action-btn" onclick="editRide(${r.id})">✏ Upravit</button><button class="action-btn del" onclick="deleteConfirmId=${r.id};render()">🗑</button></div>
+        ${deleteConfirmId===r.id?`<div class="del-confirm"><span>Smazat tento záznam?</span><button class="action-btn del" onclick="deleteRide(${r.id})">Smazat</button><button class="action-btn" onclick="deleteConfirmId=null;render()">Zrušit</button></div>`:''}
+      </div>`).join('')}
   `;
 }
 
-// ─── SETTINGS VIEW ────────────────────────────────────────────────────────────
-function renderSettings() {
-  const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'default';
-  return `
-    <div class="notif-card">
-      <div class="notif-title">🔔 Večerní upomínky</div>
-      <div class="notif-sub">
-        Každý večer v <strong>19:00, 20:00 a 21:00</strong> dostaneš upomínku — pouze pokud máš ten den jízdu s chybějícími údaji nebo nedokončenou jízdu.
-      </div>
-      ${perm === 'granted'
-        ? `<button class="notif-btn enabled">✓ Notifikace jsou povoleny</button>`
-        : perm === 'denied'
-          ? `<div style="font-size:12px;color:var(--red);padding:10px;border:1px solid rgba(248,113,113,0.2);border-radius:8px;">Notifikace jsou blokovány. Povol je v Nastavení → Safari → Notifikace.</div>`
-          : `<button class="notif-btn enable" onclick="requestNotifications()">Povolit notifikace</button>`}
+function renderStats(){
+  const done=rides.filter(r=>!r.inProgress);
+  const total=done.reduce((a,r)=>a+(r.km||0),0);
+  const byDriver=DRIVERS.map(d=>({name:d,count:done.filter(r=>r.driver===d).length,km:done.filter(r=>r.driver===d).reduce((a,r)=>a+(r.km||0),0)}));
+  const pm={};done.forEach(r=>{if(!r.purpose)return;if(!pm[r.purpose])pm[r.purpose]={count:0,km:0};pm[r.purpose].count++;pm[r.purpose].km+=(r.km||0);});
+  const byP=Object.entries(pm).map(([n,v])=>({name:n,...v})).sort((a,b)=>b.km-a.km);
+  const inc=rides.filter(isIncomplete).length,prog=rides.filter(r=>r.inProgress).length;
+  return`
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val">${done.length}</div><div class="stat-label">Jízdy</div></div>
+      <div class="stat-card"><div class="stat-val">${total.toLocaleString('cs-CZ')}</div><div class="stat-label">KM celkem</div></div>
+      ${prog>0?`<div class="stat-card" style="border-color:rgba(251,146,60,0.3);"><div class="stat-val" style="color:var(--orange);">${prog}</div><div class="stat-label">Aktivní</div></div>`:''}
+      ${inc>0?`<div class="stat-card" style="border-color:rgba(248,113,113,0.3);"><div class="stat-val" style="color:var(--red);font-size:22px;">${inc}</div><div class="stat-label">Neúplné</div></div>`:`<div class="stat-card" style="border-color:rgba(74,222,128,0.2);"><div class="stat-val" style="color:var(--green);font-size:20px;">✓</div><div class="stat-label">Vše OK</div></div>`}
     </div>
+    <div class="section-title">Podle řidiče</div>
+    ${byDriver.map(d=>`<div class="stat-row"><div><div class="stat-row-name">${d.name}</div><div class="stat-row-sub">${d.count} jízd</div></div><div class="stat-row-km">${d.km.toLocaleString('cs-CZ')} km</div></div>`).join('')}
+    ${byP.length>0?`<div class="section-title">Podle účelu</div>${byP.map(p=>`<div class="stat-row"><div style="flex:1;min-width:0;"><div class="stat-row-name">${p.name}</div><div class="stat-row-sub">${p.count}×</div></div><div class="stat-row-km">${p.km} km</div></div>`).join('')}`:''}
+  `;
+}
 
-    <div class="notif-card">
-      <div class="notif-title">🚗 CarPlay automatizace</div>
-      <div class="notif-sub">
-        Nastav v <strong>Zkratky → Automatizace</strong> dvě akce:<br><br>
-        <strong>Připojení CarPlay:</strong><br>
-        Otevřít URL:<br>
-        <code style="font-size:11px;color:var(--accent);word-break:break-all;">https://davidkostron.github.io/kniha-j-zd/?action=start</code><br><br>
-        <strong>Odpojení CarPlay:</strong><br>
-        Otevřít URL:<br>
-        <code style="font-size:11px;color:var(--orange);word-break:break-all;">https://davidkostron.github.io/kniha-j-zd/?action=end</code>
-      </div>
+function renderSettings(){
+  const perm=typeof Notification!=='undefined'?Notification.permission:'default';
+  return`
+    <div class="info-card">
+      <div class="info-card-title">🔔 Večerní upomínky</div>
+      <div class="info-card-body">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>
+      ${perm==='granted'?`<button class="notif-btn enabled">✓ Povoleno</button>`:perm==='denied'?`<button class="notif-btn denied-state">Blokováno — povol v Nastavení Safari</button>`:`<button class="notif-btn enable" onclick="requestNotifications()">Povolit notifikace</button>`}
     </div>
-
-    <div class="notif-card">
-      <div class="notif-title">📱 Přidat na plochu</div>
-      <div class="notif-sub">
-        Safari → Sdílet → <strong>Přidat na plochu</strong><br>
-        Appka funguje jako nativní aplikace bez adresního řádku.
-      </div>
+    <div class="info-card">
+      <div class="info-card-title">🚗 CarPlay automatizace</div>
+      <div class="info-card-body"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:10px;">Odpojení:</strong><code class="orange">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div>
     </div>
-
-    <div class="notif-card" style="border-color:rgba(74,222,128,0.15);">
-      <div class="notif-title">💾 Úložiště</div>
-      <div class="notif-sub">
-        Data jsou uložena v <strong>IndexedDB</strong> — přímo v tvém telefonu. Neodesílají se nikam. Zálohu stáhneš přes <strong>↓ CSV</strong> v záznamu.
-      </div>
+    <div class="info-card">
+      <div class="info-card-title">📱 Přidat na plochu</div>
+      <div class="info-card-body">Safari → Sdílet → <strong>Přidat na plochu</strong></div>
+    </div>
+    <div class="info-card" style="border-color:rgba(74,222,128,0.15);">
+      <div class="info-card-title">💾 Úložiště</div>
+      <div class="info-card-body">Data jsou v IndexedDB — pouze v tvém telefonu. Záloha přes ↓ CSV v záznamu.</div>
     </div>
   `;
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-async function init() {
-  await openDB();
-  rides = await dbAll('rides');
-  rides.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt||0) - (a.createdAt||0));
-  await loadActiveTrip();
-
-  // Check notifications
-  const notifSetting = await dbGet('settings', 'notif');
-  if (notifSetting?.value === 'granted' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    scheduleNotifications();
-  }
-
-  // Handle URL action
-  urlAction = detectUrlAction();
-  if (urlAction) {
-    await handleUrlAction(urlAction);
-  } else {
-    // Prefill kmStart from last ride
-    const lastKmEnd = rides.filter(r => r.kmEnd && !r.inProgress)[0]?.kmEnd || '';
-    form = freshForm(lastKmEnd);
-  }
-
-  updateTotal();
-  render();
+async function init(){
+  await openDB();await reload();
+  const ar=await dbGet('meta','activeRideId');activeRideId=ar?.value||null;
+  const ns=await dbGet('meta','notif');
+  if(ns?.value==='granted'&&typeof Notification!=='undefined'&&Notification.permission==='granted')scheduleNotifs();
+  const action=new URLSearchParams(window.location.search).get('action');
+  if(action){await handleUrlAction(action);}
+  else{const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';resetForm(lastKm);}
+  updateTotal();render();
 }
-
 init();
 </script>
 </body>
