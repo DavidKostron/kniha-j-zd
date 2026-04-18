@@ -205,7 +205,7 @@ let activeRideId=null;
 let SF={period:'month',dateFrom:'',dateTo:'',purpose:'',driver:'all',tab:'rides'};
 
 const DRIVERS=['David','Manželka'];
-const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Showroom Doksany','Kontrola zaměstnance','Freediving / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
+const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Schůzka se spolupracovníkem','Showroom Doksany','Kontrola zaměstnance','FreeHeating / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
 
 const F={date:'',time:'',driver:'David',from:'',fromGps:null,to:'',toGps:null,purpose:'',purposeCustom:'',kmStart:'',kmEnd:'',note:''};
 
@@ -317,9 +317,61 @@ async function revGeo(lat,lng){
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 async function reload(){
-  rides=await dbAll('rides');rides.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
-  fuels=await dbAll('fuels');fuels.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  stops=await dbAll('stops');stops.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  rides=await dbAll("rides");rides.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  fuels=await dbAll("fuels");fuels.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  stops=await dbAll("stops");stops.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  mirrorToLS();
+}
+function mirrorToLS(){
+  try{
+    const backup={rides,fuels,stops,ts:Date.now(),v:"knjizd_v6"};
+    localStorage.setItem("knjizd_mirror",JSON.stringify(backup));
+  }catch(e){}
+}
+async function restoreFromLS(){
+  try{
+    const raw=localStorage.getItem("knjizd_mirror");
+    if(!raw)return false;
+    const backup=JSON.parse(raw);
+    if(!backup.rides)return false;
+    for(const r of backup.rides){await dbPut("rides",r);}
+    for(const f of (backup.fuels||[])){await dbPut("fuels",f);}
+    for(const s of (backup.stops||[])){await dbPut("stops",s);}
+    return true;
+  }catch(e){return false;}
+}
+function downloadBackup(){
+  const backup={rides,fuels,stops,ts:Date.now(),v:"knjizd_v6",exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="kniha-jizd-zaloha-"+todayStr()+".json";
+  a.click();
+  showToast("✓ Záloha stažena");
+}
+function uploadBackup(){
+  const inp=document.createElement("input");
+  inp.type="file";inp.accept=".json";
+  inp.onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    const text=await file.text();
+    try{
+      const backup=JSON.parse(text);
+      if(!backup.rides){showToast("Neplatný soubor zálohy");return;}
+      for(const r of backup.rides){await dbPut("rides",r);}
+      for(const f of (backup.fuels||[])){await dbPut("fuels",f);}
+      for(const s of (backup.stops||[])){await dbPut("stops",s);}
+      await reload();updateTotal();render();
+      showToast("✓ Obnoveno "+backup.rides.length+" jízd");
+    }catch(ex){showToast("Chyba při obnově zálohy");}
+  };
+  inp.click();
+}
+async function migrateFromOlderDBs(){
+  if(rides.length===0&&fuels.length===0){
+    const restored=await restoreFromLS();
+    if(restored){await reload();updateTotal();showToast("✓ Data obnovena ze zálohy");}
+  }
 }
 function updateTotal(){const t=rides.filter(r=>!r.inProgress).reduce((a,r)=>a+(r.km||0),0);const el=document.getElementById('totKm');if(el)el.textContent=t.toLocaleString('cs-CZ');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
@@ -900,13 +952,13 @@ function renderSettings(){
     <div class="ic"><div class="ict">🔔 Večerní upomínky</div><div class="icb">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>${perm==='granted'?`<button class="nbt ok">✓ Povoleno</button>`:perm==='denied'?`<button class="nbt no">Blokováno — povol v Nastavení Safari</button>`:`<button class="nbt en" onclick="reqNotif()">Povolit notifikace</button>`}</div>
     <div class="ic"><div class="ict">🚗 CarPlay automatizace</div><div class="icb"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:8px;">Odpojení:</strong><code class="o">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div></div>
     <div class="ic"><div class="ict">📱 Přidat na plochu</div><div class="icb">Safari → Sdílet → <strong>Přidat na plochu</strong></div></div>
-    <div class="ic" style="border-color:rgba(74,222,128,.15);"><div class="ict">💾 Úložiště</div><div class="icb">Data jsou v IndexedDB — pouze v tvém telefonu. Záloha přes ↓ CSV v záznamu.</div></div>
+    <div class="ic" style="border-color:rgba(74,222,128,.15);"><div class="ict">💾 Úložiště a záloha</div><div class="icb">Data jsou uložena na dvou místech — IndexedDB a localStorage jako záloha. Při aktualizaci kódu se data automaticky obnoví.<br><br><strong>Ruční záloha:</strong> stáhni JSON soubor a ulož ho bezpečně.</div><button class="nbt ok" onclick="downloadBackup()" style="margin-top:10px;">↓ Stáhnout zálohu (JSON)</button><button class="nbt en" onclick="uploadBackup()" style="margin-top:8px;">↑ Obnovit ze zálohy (JSON)</button></div>
   `;
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init(){
-  await openDB();await reload();loadSaved();
+  await openDB();await reload();await migrateFromOlderDBs();loadSaved();
   const ar=await dbGet('meta','activeRideId');activeRideId=ar?.value||null;
   const ns=await dbGet('meta','notif');
   if(ns?.value==='granted'&&typeof Notification!=='undefined'&&Notification.permission==='granted')schedNotifs();
