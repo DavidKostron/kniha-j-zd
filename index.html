@@ -387,7 +387,8 @@ async function startRide(){
   const pf=purpose==='Jiné'?purposeCustom:purpose;
   if(pf)localStorage.setItem('lp',pf);
   F.from=from;F.purpose=purpose;F.purposeCustom=purposeCustom;F.kmStart=kmStart;F.note=note;saveF();
-  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to:'',toGps:null,purpose:pf||'',kmStart,kmEnd:'',km:null,note,inProgress:true,createdAt:Date.now()};
+  const ts=await addTimestamp({type:'start',from,date:F.date,time:F.time,driver:F.driver});
+  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to:'',toGps:null,purpose:pf||'',kmStart,kmEnd:'',km:null,note,inProgress:true,createdAt:Date.now(),timestamp:ts};
   const id=await dbPut('rides',ride);
   activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
   await reload();updateTotal();closeModal();showToast('🚗 Jízda zahájena');
@@ -429,7 +430,8 @@ async function finishRide(rideId,toAddr,toGps,kmEnd,purpose,note){
   const pf=purpose||ex.purpose;
   if(pf)localStorage.setItem('lp',pf);
   const km=kmDiff(ex.kmStart,kmEnd);
-  const upd={...ex,to:toAddr||'',toGps:toGps||null,purpose:pf||'',kmEnd:kmEnd||'',km,note:note||ex.note,inProgress:false};
+  const tsEnd=await addTimestamp({type:'end',to:toAddr,kmEnd,date:todayStr(),time:nowTime()});
+  const upd={...ex,to:toAddr||'',toGps:toGps||null,purpose:pf||'',kmEnd:kmEnd||'',km,note:note||ex.note,inProgress:false,timestampEnd:tsEnd};
   await dbPut('rides',upd);
   activeRideId=null;await dbDel('meta','activeRideId');editId=null;
   F.kmStart=kmEnd||'';saveF();
@@ -525,15 +527,60 @@ window.doStop=async(rideId)=>{
   await reload();setCooldown();closeModal();showToast('🅿 Zastávka uložena — jízda pokračuje');render();
 };
 
+
+// Photo capture for receipts — native file input with camera
+let _pendingReceiptPhoto=null;
+
+function captureReceipt(){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='image/*';
+  inp.capture='environment';
+  inp.onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    // Convert to base64 for storage
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      _pendingReceiptPhoto=ev.target.result;
+      // Show preview in modal
+      const prev=document.getElementById('fuel-photo-preview');
+      if(prev){
+        prev.innerHTML=`<img src="${ev.target.result}" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;border:1px solid var(--b2);"><button onclick="removeReceiptPhoto()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;border-radius:50%;width:28px;height:28px;color:white;cursor:pointer;font-size:14px;">✕</button>`;
+        prev.style.display='block';
+      }
+      showToast('📷 Foto účtenky přiloženo');
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function removeReceiptPhoto(){
+  _pendingReceiptPhoto=null;
+  const prev=document.getElementById('fuel-photo-preview');
+  if(prev){prev.innerHTML='';prev.style.display='none';}
+}
+
+function showReceiptPhoto(dataUrl){
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.onclick=()=>modal.remove();
+  modal.innerHTML=`<img src="${dataUrl}" style="max-width:100%;max-height:100%;border-radius:12px;"><button style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:40px;height:40px;color:white;cursor:pointer;font-size:18px;">✕</button>`;
+  document.body.appendChild(modal);
+}
+
 function showFuelModal(rideId){
   const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
   let fGps=null;
+  _pendingReceiptPhoto=null;
   document.getElementById('modals').innerHTML=`
   <div class="mo" onclick="if(event.target===this)closeModal()">
     <div class="mw" style="position:relative;">
       <button class="mclose" onclick="closeModal()">✕</button>
       <div class="mtitle">⛽ Tankování</div>
-      <div class="msub">Jízda pokračuje. Zadej 2 ze 3 hodnot — třetí se dopočítá.</div>
+      <div class="msub">Jízda pokračuje. Zadej 2 ze 3 hodnot — třetí se dopočítá automaticky.</div>
+      <button class="btn btn-pu" style="margin-top:0;margin-bottom:10px;font-size:13px;padding:11px;" onclick="captureReceipt()">📷 Vyfotit účtenku</button>
+      <div id="fuel-photo-preview" style="display:none;position:relative;margin-bottom:14px;"></div>
       <div id="fuel-status" style="font-size:11px;color:var(--m2);margin-bottom:12px;">📍 Zaznamenávám polohu...</div>
       <div class="fld"><div class="flbl">Čerpací stanice</div><input id="fuel-station" class="fi" placeholder="Shell D8 exit 17"></div>
       <div class="fld"><div class="flbl">Stav KM (tachometr)</div><input id="fuel-km" class="fi" type="number" placeholder="${lastKm||'42500'}" value="${lastKm}"></div>
@@ -552,21 +599,37 @@ function showFuelModal(rideId){
     </div>
   </div>`;
   window.fuelCalc=()=>{
-    const l=parseFloat(document.getElementById('fuel-l')?.value);
-    const p=parseFloat(document.getElementById('fuel-p')?.value);
-    const t=parseFloat(document.getElementById('fuel-t')?.value);
-    const el=document.getElementById('fuel-calc');if(!el)return;
-    if(!isNaN(l)&&!isNaN(p)&&isNaN(t))el.textContent=`→ Celkem: ${(l*p).toFixed(2)} Kč`;
-    else if(!isNaN(l)&&!isNaN(t)&&isNaN(p))el.textContent=`→ Cena/litr: ${(t/l).toFixed(2)} Kč`;
-    else if(!isNaN(p)&&!isNaN(t)&&isNaN(l))el.textContent=`→ Litry: ${(t/p).toFixed(2)} l`;
-    else el.textContent='';
+    const lEl=document.getElementById('fuel-l');
+    const pEl=document.getElementById('fuel-p');
+    const tEl=document.getElementById('fuel-t');
+    const el=document.getElementById('fuel-calc');
+    if(!lEl||!pEl||!tEl)return;
+    const l=parseFloat(lEl.value);
+    const p=parseFloat(pEl.value);
+    const t=parseFloat(tEl.value);
+    // Auto-fill third field
+    if(!isNaN(l)&&!isNaN(p)&&isNaN(t)){
+      const calc=(l*p).toFixed(2);
+      tEl.value=calc;
+      if(el)el.textContent='→ Celkem dopočítáno: '+calc+' Kč';
+    } else if(!isNaN(l)&&!isNaN(t)&&isNaN(p)){
+      const calc=(t/l).toFixed(2);
+      pEl.value=calc;
+      if(el)el.textContent='→ Cena/litr dopočítána: '+calc+' Kč';
+    } else if(!isNaN(p)&&!isNaN(t)&&isNaN(l)){
+      const calc=(t/p).toFixed(2);
+      lEl.value=calc;
+      if(el)el.textContent='→ Litry dopočítány: '+calc+' l';
+    } else if(el) el.textContent='';
   };
   window.doFuel=async(rideId)=>{
     const l=parseFloat(document.getElementById('fuel-l')?.value)||null;
     const p=parseFloat(document.getElementById('fuel-p')?.value)||null;
     let t=parseFloat(document.getElementById('fuel-t')?.value)||null;
     if(!t&&l&&p)t=Math.round(l*p*100)/100;
-    await saveFuel({rideId:rideId||null,date:todayStr(),time:nowTime(),station:document.getElementById('fuel-station')?.value||'',km:document.getElementById('fuel-km')?.value||'',liters:l,pricePer:p,priceTotal:t,gps:fGps,note:document.getElementById('fuel-note')?.value||''});
+    const fts=await addTimestamp({type:'fuel',liters:l,priceTotal:t,date:todayStr()});
+    await saveFuel({rideId:rideId||null,date:todayStr(),time:nowTime(),station:document.getElementById('fuel-station')?.value||'',km:document.getElementById('fuel-km')?.value||'',liters:l,pricePer:p,priceTotal:t,gps:fGps,note:document.getElementById('fuel-note')?.value||'',timestamp:fts,photo:_pendingReceiptPhoto||null});
+    _pendingReceiptPhoto=null;
   };
   navigator.geolocation?.getCurrentPosition(async pos=>{
     const{latitude:lat,longitude:lng}=pos.coords;fGps={lat,lng};
@@ -710,6 +773,113 @@ function showEndModal2(ride){
   setTimeout(()=>window.endGPS&&window.endGPS(),300);
 }
 
+
+// ── TIMESTAMP (fast local hash + daily seal from freetsa.org) ────────────────
+async function addTimestamp(data){
+  // FAST local-only hash. Daily seal runs separately in background.
+  try{
+    const str=JSON.stringify({...data,localTime:new Date().toISOString()});
+    const buf=new TextEncoder().encode(str);
+    const hashBuf=await crypto.subtle.digest('SHA-256',buf);
+    const hash=Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    return{hash,localTime:new Date().toISOString(),server:'local',verified:false};
+  }catch(e){return{localTime:new Date().toISOString(),server:'none',verified:false};}
+}
+
+// Daily seal — called after 22:00 or first app open after 22:00
+async function sealDay(dateStr){
+  try{
+    // Collect all hashes for this day
+    const dayRides=rides.filter(r=>r.date===dateStr);
+    const dayFuels=fuels.filter(f=>(f.date||'')===dateStr);
+    const dayStops=stops.filter(s=>(s.date||'')===dateStr);
+    const allHashes=[];
+    dayRides.forEach(r=>{if(r.timestamp?.hash)allHashes.push(r.timestamp.hash);if(r.timestampEnd?.hash)allHashes.push(r.timestampEnd.hash);});
+    dayFuels.forEach(f=>{if(f.timestamp?.hash)allHashes.push(f.timestamp.hash);});
+    dayStops.forEach(s=>{if(s.timestamp?.hash)allHashes.push(s.timestamp.hash);});
+    if(allHashes.length===0)return null;
+    // Create combined hash
+    const combined=allHashes.sort().join('|');
+    const buf=new TextEncoder().encode(combined);
+    const hashBuf=await crypto.subtle.digest('SHA-256',buf);
+    const hashHex=Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    // Request RFC 3161 timestamp
+    try{
+      const resp=await fetch('https://freetsa.org/tsr',{
+        method:'POST',
+        headers:{'Content-Type':'application/timestamp-query'},
+        body:new Uint8Array(hashBuf),
+        signal:AbortSignal.timeout(10000)
+      });
+      if(resp.ok){
+        const tsrBuf=await resp.arrayBuffer();
+        const tsr=btoa(String.fromCharCode(...new Uint8Array(tsrBuf)));
+        return{date:dateStr,combinedHash:hashHex,individualHashes:allHashes,tsr,sealedAt:new Date().toISOString(),server:'freetsa.org',verified:true,recordCount:allHashes.length};
+      }
+    }catch(e){console.log('Seal server error:',e);}
+    return{date:dateStr,combinedHash:hashHex,individualHashes:allHashes,sealedAt:new Date().toISOString(),server:'local',verified:false,recordCount:allHashes.length};
+  }catch(e){console.log('Seal error:',e);return null;}
+}
+
+async function saveDailySeal(dateStr,seal){
+  if(!seal)return;
+  const existing=await dbGet('meta','seal-'+dateStr);
+  const history=existing?.history||[];
+  if(existing?.seal){history.push(existing.seal);}
+  await dbPut('meta',{key:'seal-'+dateStr,seal,history});
+}
+
+async function runDailySealCheck(){
+  // Run for today if after 22:00, also check yesterday if missing
+  const now=new Date();
+  const hour=now.getHours();
+  const today=todayStr();
+  const yesterday=new Date(now.getTime()-24*60*60*1000).toISOString().split('T')[0];
+
+  // Check yesterday always (if missing or data changed)
+  await checkAndSeal(yesterday);
+  // Check today only if after 22:00
+  if(hour>=22){await checkAndSeal(today);}
+}
+
+async function checkAndSeal(dateStr){
+  const existing=await dbGet('meta','seal-'+dateStr);
+  // Compute current combined hash for the day
+  const dayRides=rides.filter(r=>r.date===dateStr);
+  const dayFuels=fuels.filter(f=>(f.date||'')===dateStr);
+  const dayStops=stops.filter(s=>(s.date||'')===dateStr);
+  const allHashes=[];
+  dayRides.forEach(r=>{if(r.timestamp?.hash)allHashes.push(r.timestamp.hash);if(r.timestampEnd?.hash)allHashes.push(r.timestampEnd.hash);});
+  dayFuels.forEach(f=>{if(f.timestamp?.hash)allHashes.push(f.timestamp.hash);});
+  dayStops.forEach(s=>{if(s.timestamp?.hash)allHashes.push(s.timestamp.hash);});
+  if(allHashes.length===0)return;
+  const combined=allHashes.sort().join('|');
+  const buf=new TextEncoder().encode(combined);
+  const hashBuf=await crypto.subtle.digest('SHA-256',buf);
+  const currentHash=Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+
+  // If no seal yet OR hash changed → create new seal
+  if(!existing?.seal||existing.seal.combinedHash!==currentHash){
+    const seal=await sealDay(dateStr);
+    if(seal){
+      await saveDailySeal(dateStr,seal);
+      if(dateStr===todayStr()||dateStr===new Date(Date.now()-86400000).toISOString().split('T')[0]){
+        showToast('🔏 Den zapečetěn: '+fmtD(dateStr));
+      }
+    }
+  }
+}
+
+function tsLabel(ts){
+  if(!ts)return'';
+  return'🔒 Hash · '+ts.localTime.slice(0,16).replace('T',' ');
+}
+
+async function getSealForDate(dateStr){
+  const s=await dbGet('meta','seal-'+dateStr);
+  return s?.seal||null;
+}
+
 // ── URL ACTION ────────────────────────────────────────────────────────────────
 async function handleUrl(action){
   const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
@@ -725,7 +895,30 @@ async function handleUrl(action){
     if(active){showToast('Jízda stále aktivní — pokračuj');setView('add');render();return;}
     const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
     initForm(lastKm);setView('add');
-    setTimeout(()=>getGPS('from'),500);showToast('🚗 Start — zaznamenávám polohu...');
+    // AUTO START — get GPS then immediately save ride without any click needed
+    showToast('🚗 Zahajuji jízdu automaticky...');
+    navigator.geolocation?.getCurrentPosition(async pos=>{
+      const{latitude:lat,longitude:lng}=pos.coords;
+      const addr=await revGeo(lat,lng);
+      F.from=addr;F.fromGps={lat,lng};saveF();
+      const inp=document.getElementById('inp-from');if(inp)inp.value=addr;
+      const btn=document.getElementById('gps-from');if(btn){btn.className='gbtn done';btn.textContent='✓ GPS';}
+      // Auto-save ride immediately
+      const ts=await addTimestamp({type:'start',from:addr,date:F.date,time:F.time});
+      const ride={date:F.date,time:F.time,driver:F.driver,from:addr,fromGps:{lat,lng},to:'',toGps:null,purpose:F.purpose||'',kmStart:F.kmStart,kmEnd:'',km:null,note:F.note,inProgress:true,createdAt:Date.now(),timestamp:ts};
+      const id=await dbPut('rides',ride);
+      activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
+      await reload();updateTotal();
+      showToast('✅ Jízda zahájena automaticky · '+addr);render();
+    },async()=>{
+      // No GPS — save with empty from, user fills later
+      const ts=await addTimestamp({type:'start',date:F.date,time:F.time});
+      const ride={date:F.date,time:F.time,driver:F.driver,from:'',fromGps:null,to:'',toGps:null,purpose:F.purpose||'',kmStart:F.kmStart,kmEnd:'',km:null,note:F.note,inProgress:true,createdAt:Date.now(),timestamp:ts};
+      const id=await dbPut('rides',ride);
+      activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
+      await reload();updateTotal();
+      showToast('🚗 Jízda zahájena · doplň adresu');render();
+    },{timeout:8000,enableHighAccuracy:true});
 
   }else if(action==='end'){
     const active=await getActiveRide();
@@ -842,8 +1035,9 @@ function renderList(){
     ${all.length>0?`<div class="rmeta"><span>${done.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
     ${all.length===0?`<div class="empty">Žádné záznamy</div>`:all.map(item=>{
       if(item._t==='stop')return`<div class="card stop"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(167,139,250,.1);color:var(--pu);font-weight:600;">🅿 ZASTÁVKA</span></div><div class="croute">${item.addr||'Poloha nezaznamenána'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div>`;
-      if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters!=null?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal!=null?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:5px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ',{minimumFractionDigits:2})} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}</div>`:''}<div class="cact"><button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
-      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div><div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="cklbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div></div>${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá</div>`:''}<div class="cact">${item.inProgress?`<button class="abtn fin" onclick="showChoiceModal(rides.find(r=>r.id===${item.id}))">Akce</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>${delId===item.id?`<div class="dcf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}</div>`;
+      if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters!=null?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal!=null?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:5px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ',{minimumFractionDigits:2})} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}</div>`:''}<div class="cact">${item.photo?`<button class="abtn" onclick="showReceiptPhoto('${item.photo}')">📷 Účtenka</button>`:''}<button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
+      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.timestamp?`<div style="font-size:10px;color:var(--m2);margin-top:2px;">${tsLabel(item.timestamp)}</div>`:''}
+              ${item.timestampEnd?`<div style="font-size:10px;color:var(--m2);">${tsLabel(item.timestampEnd)}</div>`:''}${item.note?`<div class="cnote">${item.note}</div>`:''}</div><div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="cklbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div></div>${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá</div>`:''}<div class="cact">${item.inProgress?`<button class="abtn fin" onclick="showChoiceModal(rides.find(r=>r.id===${item.id}))">Akce</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>${delId===item.id?`<div class="dcf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}</div>`;
     }).join('')}
   `;
 }
@@ -952,8 +1146,20 @@ function renderSettings(){
     <div class="ic"><div class="ict">🔔 Večerní upomínky</div><div class="icb">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>${perm==='granted'?`<button class="nbt ok">✓ Povoleno</button>`:perm==='denied'?`<button class="nbt no">Blokováno — povol v Nastavení Safari</button>`:`<button class="nbt en" onclick="reqNotif()">Povolit notifikace</button>`}</div>
     <div class="ic"><div class="ict">🚗 CarPlay automatizace</div><div class="icb"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:8px;">Odpojení:</strong><code class="o">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div></div>
     <div class="ic"><div class="ict">📱 Přidat na plochu</div><div class="icb">Safari → Sdílet → <strong>Přidat na plochu</strong></div></div>
+    <div class="ic" style="border-color:rgba(232,197,71,.2);"><div class="ict">🔏 Časové pečetě</div><div class="icb">Každý záznam dostane okamžitý lokální hash (SHA-256). Každý večer ve 22:00 appka vytvoří <strong>denní pečeť</strong> ze souhrnu všech hashů dne a orazítkuje ji na serveru <strong>freetsa.org</strong> (RFC 3161, zdarma, EU).<br><br>Pokud večer nebo později něco upravíš, vytvoří se <strong>nová pečeť</strong> s novým hashem — historie předchozích pečetí zůstává zachována. Úřad pak vidí všechny úpravy a kdy proběhly.</div><button class="nbt en" onclick="runDailySealCheck()" style="margin-top:10px;">🔏 Zapečetit ručně teď</button></div>
     <div class="ic" style="border-color:rgba(74,222,128,.15);"><div class="ict">💾 Úložiště a záloha</div><div class="icb">Data jsou uložena na dvou místech — IndexedDB a localStorage jako záloha. Při aktualizaci kódu se data automaticky obnoví.<br><br><strong>Ruční záloha:</strong> stáhni JSON soubor a ulož ho bezpečně.</div><button class="nbt ok" onclick="downloadBackup()" style="margin-top:10px;">↓ Stáhnout zálohu (JSON)</button><button class="nbt en" onclick="uploadBackup()" style="margin-top:8px;">↑ Obnovit ze zálohy (JSON)</button></div>
   `;
+}
+
+function scheduleNightSeal(){
+  const now=new Date();
+  const target=new Date();
+  target.setHours(22,0,0,0);
+  if(target<now)target.setDate(target.getDate()+1);
+  setTimeout(async()=>{
+    await runDailySealCheck();
+    scheduleNightSeal();
+  },target-now);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -962,7 +1168,19 @@ async function init(){
   const ar=await dbGet('meta','activeRideId');activeRideId=ar?.value||null;
   const ns=await dbGet('meta','notif');
   if(ns?.value==='granted'&&typeof Notification!=='undefined'&&Notification.permission==='granted')schedNotifs();
-  const action=new URLSearchParams(window.location.search).get('action');
+  // Check if daily seal needs to run (yesterday + today if after 22:00)
+  runDailySealCheck();
+  scheduleNightSeal();
+  const urlP=new URLSearchParams(window.location.search);
+  const action=urlP.get('action');
+  // Handle receipt data from Shortcuts
+  const fuelL=urlP.get('liters');const fuelP=urlP.get('price');const fuelT=urlP.get('total');const fuelS=urlP.get('station');
+  if(fuelL||fuelP||fuelT){
+    // Pre-fill fuel modal with scanned data
+    window._scannedFuel={liters:fuelL,price:fuelP,total:fuelT,station:fuelS};
+    const url2=new URL(window.location);['liters','price','total','station'].forEach(k=>url2.searchParams.delete(k));
+    window.history.replaceState({},'' ,url2);
+  }
   if(action){await handleUrl(action);}
   else{const lk=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';initForm(lk);}
   updateTotal();render();
