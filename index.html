@@ -536,6 +536,11 @@ async function generateMonthlyPDF(year,month){
 
   const periodRides=rides.filter(r=>!r.inProgress&&r.date>=monthStart&&r.date<=monthEnd);
   const periodFuels=fuels.filter(f=>(f.date||'')>=monthStart&&(f.date||'')<=monthEnd);
+  // Diagnostic — if empty, warn user before generating
+  if(periodRides.length===0&&periodFuels.length===0){
+    const all=rides.filter(r=>!r.inProgress).map(r=>r.date).slice(0,5).join(', ');
+    if(!confirm('Za období '+monthStart+' až '+monthEnd+' nejsou žádné jízdy ani tankování.\n\nPosledních 5 dat: '+(all||'nic')+'\n\nVygenerovat prázdný PDF?'))return;
+  }
   const vehicle=await getVehicle()||{};
   const seal=await getSealForDate(monthEnd);
 
@@ -772,7 +777,7 @@ async function getActiveRide(){
   return all.find(r=>r.id===ar.value&&r.inProgress)||all.find(r=>r.inProgress)||null;
 }
 
-async function finishRide(rideId,toAddr,toGps,kmEnd,purpose,note){
+async function finishRide(rideId,toAddr,toGps,kmEnd,purpose,note,arrivalDate,arrivalTime){
   // Always re-fetch ride directly from DB
   const all=await dbAll('rides');
   const ex=all.find(r=>r.id===rideId)||all.find(r=>r.inProgress);
@@ -780,8 +785,10 @@ async function finishRide(rideId,toAddr,toGps,kmEnd,purpose,note){
   const pf=purpose||ex.purpose;
   if(pf)localStorage.setItem('lp',pf);
   const km=kmDiff(ex.kmStart,kmEnd);
-  const tsEnd=await addTimestamp({type:'end',to:toAddr,kmEnd,date:todayStr(),time:nowTime(),gps:toGps});
-  const upd={...ex,to:toAddr||'',toGps:toGps||null,purpose:pf||'',kmEnd:kmEnd||'',km,note:note||ex.note,inProgress:false,timestampEnd:tsEnd};
+  const aDate=arrivalDate||todayStr();
+  const aTime=arrivalTime||nowTime();
+  const tsEnd=await addTimestamp({type:'end',to:toAddr,kmEnd,date:aDate,time:aTime,gps:toGps});
+  const upd={...ex,to:toAddr||'',toGps:toGps||null,purpose:pf||'',kmEnd:kmEnd||'',km,note:note||ex.note,inProgress:false,timestampEnd:tsEnd,arrivalDate:aDate,arrivalTime:aTime};
   await dbPut('rides',upd);
   activeRideId=null;await dbDel('meta','activeRideId');editId=null;
   F.kmStart=kmEnd||'';saveF();
@@ -789,6 +796,11 @@ async function finishRide(rideId,toAddr,toGps,kmEnd,purpose,note){
   flash=true;render();setTimeout(()=>{flash=false;},2000);
   // Auto backup after ride finish
   setTimeout(()=>triggerAutoBackup(false),800);
+  // If conflict dialog triggered this flow, auto-start new ride
+  if(window._autoStartAfterFinish){
+    window._autoStartAfterFinish=false;
+    setTimeout(()=>handleUrl('start'),1000);
+  }
 }
 
 async function saveFuel(data){
@@ -822,6 +834,53 @@ function exportCSV(){
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function closeModal(){document.getElementById('modals').innerHTML='';}
+
+function showConflictDialog(oldRide){
+  document.getElementById('modals').innerHTML=`
+  <div class="mo">
+    <div class="mw" style="position:relative;">
+      <div class="mtitle">⚠️ Předchozí jízda je stále aktivní</div>
+      <div class="msub">${oldRide.from||'?'} · ${oldRide.driver} · ${fmtD(oldRide.date)} ${oldRide.time||''}${oldRide.kmStart?' · '+oldRide.kmStart+' km':''}</div>
+      <div class="choice-card bl" onclick="closeModal();showToast('Pokračuji v předchozí jízdě')">
+        <div class="ch-icon">▶</div>
+        <div class="ch-title">Pokračovat v předchozí jízdě</div>
+        <div class="ch-desc">Nezahájí se nová jízda. Předchozí zůstává aktivní — ukončíš ji až v cíli.</div>
+      </div>
+      <div class="choice-card o" onclick="endOldStartNew(${oldRide.id})">
+        <div class="ch-icon">⏭</div>
+        <div class="ch-title">Ukončit předchozí a začít novou</div>
+        <div class="ch-desc">Předchozí jízda se ukončí na aktuální poloze, hned se zahájí nová.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.endOldStartNew=async(oldRideId)=>{
+  closeModal();
+  showToast('⏭ Ukončuji předchozí, zahajuji novou...');
+  navigator.geolocation?.getCurrentPosition(async pos=>{
+    const{latitude:lat,longitude:lng,accuracy}=pos.coords;
+    const addr=await revGeo(lat,lng);
+    const gpsData={lat,lng,accuracy:Math.round(accuracy),capturedAt:new Date().toISOString()};
+    // Close old ride at current position
+    const all=await dbAll('rides');
+    const ex=all.find(r=>r.id===oldRideId);
+    if(ex){
+      const tsEnd=await addTimestamp({type:'end',to:addr,date:todayStr(),time:nowTime(),gps:gpsData});
+      await dbPut('rides',{...ex,to:addr,toGps:gpsData,inProgress:false,timestampEnd:tsEnd});
+    }
+    await dbDel('meta','activeRideId');activeRideId=null;
+    // Start new ride at same position
+    await reload();
+    const ts=await addTimestamp({type:'start',from:addr,date:todayStr(),time:nowTime(),gps:gpsData});
+    const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
+    const newRide={date:todayStr(),time:nowTime(),driver:F.driver,from:addr,fromGps:gpsData,to:'',toGps:null,purpose:'',kmStart:lastKm,kmEnd:'',km:null,note:'',inProgress:true,createdAt:Date.now(),timestamp:ts};
+    const id=await dbPut('rides',newRide);
+    activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
+    await reload();updateTotal();
+    showToast('✅ Nová jízda zahájena · '+addr);render();
+  },()=>{showToast('GPS selhala');},{timeout:8000,enableHighAccuracy:true});
+};
 
 function showChoiceModal(ride){
   if(!ride){showToast('Nenalezena aktivní jízda');return;}
@@ -1057,6 +1116,15 @@ function showEndModal2(ride){
       <div class="fld"><div class="flbl">Poznámka</div><input id="end-note" class="fi" placeholder="Jméno klienta, agenda..." value="${note}"></div>
 
       <div class="grid2">
+        <div class="fld"><div class="flbl">Datum příjezdu</div><input id="end-arrDate" class="fi" type="date" value="${todayStr()}"></div>
+        <div class="fld"><div class="flbl">Čas příjezdu</div><input id="end-arrTime" class="fi" type="time" value="${nowTime()}"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="fld"><div class="flbl">Datum příjezdu</div><input id="end-date" class="fi" type="date" value="${todayStr()}"></div>
+        <div class="fld"><div class="flbl">Čas příjezdu</div><input id="end-time" class="fi" type="time" value="${nowTime()}"></div>
+      </div>
+      <div class="grid2">
         <div class="fld"><div class="flbl">KM — odjezd</div><input class="fi" value="${ride.kmStart||''}" disabled style="opacity:.5;"></div>
         <div class="fld"><div class="flbl">KM — příjezd</div><input id="end-km" class="fi" type="number" placeholder="příjezd" value="${kmEnd}" oninput="endKmInput(this.value)"></div>
       </div>
@@ -1117,8 +1185,10 @@ function showEndModal2(ride){
     note=document.getElementById('end-note')?.value||note;
     const pc=document.getElementById('end-purp-custom')?.value||purposeCustom;
     const pf=purpose==='Jiné'?pc:purpose;
+    const arrDate=document.getElementById('end-arrDate')?.value||todayStr();
+    const arrTime=document.getElementById('end-arrTime')?.value||nowTime();
     if(!toAddr){showToast('Vyplň kam');return;}
-    await finishRide(rideId,toAddr,toGps,kmEnd,pf,note);
+    await finishRide(rideId,toAddr,toGps,kmEnd,pf,note,arrDate,arrTime);
   };
 
   // Auto GPS
@@ -1236,6 +1306,35 @@ async function getSealForDate(dateStr){
 }
 
 // ── URL ACTION ────────────────────────────────────────────────────────────────
+// ── CONFLICT DIALOG — když přijde start ale jízda je aktivní ─────────────────
+function showConflictDialog(activeRide){
+  document.getElementById('modals').innerHTML=`
+  <div class="mo" onclick="if(event.target===this){closeModal();}">
+    <div class="mw">
+      <button class="mclose" onclick="closeModal()">✕</button>
+      <div class="mtitle">⚠ Jízda je stále aktivní</div>
+      <div class="msub">${activeRide.from} · ${activeRide.driver} · ${fmtD(activeRide.date)} ${activeRide.time||''}${activeRide.kmStart?' · '+activeRide.kmStart+' km':''}</div>
+      <div class="choice-card o" onclick="closeModal();showToast('Pokračuješ v jízdě')">
+        <div class="ch-icon">🚗</div>
+        <div class="ch-title">Pokračovat v předchozí</div>
+        <div class="ch-desc">Jízda už byla zahájena. Nic nezaznamenávat — jen zavřít.</div>
+      </div>
+      <div class="choice-card bl" onclick="finishAndStartNew(${activeRide.id})">
+        <div class="ch-icon">🏁→🚗</div>
+        <div class="ch-title">Ukončit předchozí a začít novou</div>
+        <div class="ch-desc">Zobrazí se dialog pro dokončení. Po uložení se automaticky zahájí nová jízda.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function finishAndStartNew(rideId){
+  // Flag that after finishing, we should auto-start new ride
+  window._autoStartAfterFinish=true;
+  closeModal();
+  setTimeout(()=>showEndModal(rideId),150);
+}
+
 async function handleUrl(action){
   const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
 
@@ -1245,9 +1344,13 @@ async function handleUrl(action){
       const active=await getActiveRide();
       if(active){showToast('Jízda stále aktivní — pokračuj');setView('add');render();return;}
     }
-    // Check if there's already an active ride
+    // Check if there's already an active ride — show conflict dialog
     const active=await getActiveRide();
-    if(active){showToast('Jízda stále aktivní — pokračuj');setView('add');render();return;}
+    if(active){
+      setView('add');render();
+      setTimeout(()=>showConflictDialog(active),100);
+      return;
+    }
     const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
     initForm(lastKm);setView('add');
     // AUTO START — get GPS then immediately save ride without any click needed
@@ -1417,7 +1520,7 @@ function renderList(){
     ${all.length===0?`<div class="empty">Žádné záznamy</div>`:all.map(item=>{
       if(item._t==='stop')return`<div class="card stop"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(167,139,250,.1);color:var(--pu);font-weight:600;">🅿 ZASTÁVKA</span></div><div class="croute">${item.addr||'Poloha nezaznamenána'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div>`;
       if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters!=null?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal!=null?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:5px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ',{minimumFractionDigits:2})} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}</div>`:''}<div class="cact">${item.photo?`<button class="abtn" onclick="showReceiptPhoto('${item.photo}')">📷 Účtenka</button>`:''}<button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
-      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.timestamp?`<div style="font-size:10px;color:var(--m2);margin-top:2px;">${tsLabel(item.timestamp)}</div>`:''}
+      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.arrivalDate&&(item.arrivalDate!==item.date||item.arrivalTime!==item.time)?`<div style="font-size:11px;color:var(--m2);">Příjezd: ${fmtD(item.arrivalDate)} ${item.arrivalTime||''}</div>`:''}${item.timestamp?`<div style="font-size:10px;color:var(--m2);margin-top:2px;">${tsLabel(item.timestamp)}</div>`:''}
               ${item.timestampEnd?`<div style="font-size:10px;color:var(--m2);">${tsLabel(item.timestampEnd)}</div>`:''}${item.note?`<div class="cnote">${item.note}</div>`:''}</div><div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="cklbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div></div>${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá</div>`:''}<div class="cact">${item.inProgress?`<button class="abtn fin" onclick="showChoiceModal(rides.find(r=>r.id===${item.id}))">Akce</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>${delId===item.id?`<div class="dcf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}</div>`;
     }).join('')}
   `;
