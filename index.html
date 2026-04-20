@@ -393,6 +393,32 @@ async function migrateFromOlderDBs(){
   }
 }
 
+async function cleanupDuplicateActiveRides(){
+  const all=await dbAll('rides');
+  const actives=all.filter(r=>r.inProgress).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(actives.length<=1)return 0;
+  // Keep the most recent active, close others
+  const keep=actives[0];
+  let closed=0;
+  for(let i=1;i<actives.length;i++){
+    const r=actives[i];
+    // Close each older one at its fromGps (best guess — we don't know its real end)
+    const tsEnd=await addTimestamp({type:'end-auto-cleanup',to:r.from||'',date:r.date,time:r.time,gps:r.fromGps});
+    await dbPut('rides',{...r,to:r.from||'(automaticky uzavřeno — duplicitní start)',toGps:r.fromGps||null,inProgress:false,timestampEnd:tsEnd,autoClosedDuplicate:true});
+    closed++;
+  }
+  await dbPut('meta',{key:'activeRideId',value:keep.id});
+  activeRideId=keep.id;
+  return closed;
+}
+
+async function cleanupDuplicatesUI(){
+  const closed=await cleanupDuplicateActiveRides();
+  if(closed===0){showToast('Žádné duplicitní aktivní jízdy');return;}
+  await reload();updateTotal();render();
+  showToast('🧹 Uzavřeno '+closed+' duplicitních jízd');
+}
+
 // ── DEVICE FINGERPRINT ────────────────────────────────────────────────────────
 async function getDeviceFingerprint(){
   const parts=[navigator.userAgent,navigator.language,screen.width+'x'+screen.height,screen.colorDepth,new Date().getTimezoneOffset(),navigator.hardwareConcurrency||'',navigator.platform||''];
@@ -739,6 +765,9 @@ async function startRide(){
   const kmStart=document.getElementById('inp-kmStart')?.value||F.kmStart;
   const note=document.getElementById('inp-note')?.value||F.note;
   if(!from){showToast('Vyplň odkud');return;}
+  // Guard — nesmí existovat jiná aktivní jízda
+  const allR=await dbAll('rides');
+  if(allR.some(r=>r.inProgress)){showToast('Již existuje aktivní jízda — dokonči ji první');return;}
   const pf=purpose==='Jiné'?purposeCustom:purpose;
   if(pf)localStorage.setItem('lp',pf);
   F.from=from;F.purpose=purpose;F.purposeCustom=purposeCustom;F.kmStart=kmStart;F.note=note;saveF();
@@ -1141,11 +1170,6 @@ function showEndModal2(ride){
       <div class="fld"><div class="flbl">Poznámka</div><input id="end-note" class="fi" placeholder="Jméno klienta, agenda..." value="${note}"></div>
 
       <div class="grid2">
-        <div class="fld"><div class="flbl">Datum příjezdu</div><input id="end-arrDate" class="fi" type="date" value="${todayStr()}"></div>
-        <div class="fld"><div class="flbl">Čas příjezdu</div><input id="end-arrTime" class="fi" type="time" value="${nowTime()}"></div>
-      </div>
-
-      <div class="grid2">
         <div class="fld"><div class="flbl">Datum příjezdu</div><input id="end-date" class="fi" type="date" value="${todayStr()}"></div>
         <div class="fld"><div class="flbl">Čas příjezdu</div><input id="end-time" class="fi" type="time" value="${nowTime()}"></div>
       </div>
@@ -1364,21 +1388,29 @@ async function handleUrl(action){
   const url=new URL(window.location);url.searchParams.delete('action');window.history.replaceState({},'' ,url);
 
   if(action==='start'){
-    // Check cooldown — if within 10 min of stop/fuel/dismiss, ignore
-    if(inCooldown()){
-      const active=await getActiveRide();
-      if(active){showToast('Jízda stále aktivní — pokračuj');setView('add');render();return;}
-    }
-    // Check if there's already an active ride — show conflict dialog
-    const active=await getActiveRide();
-    if(active){
+    // BULLETPROOF: Always check DB directly for ANY in-progress ride
+    const allRides=await dbAll('rides');
+    const activeInDb=allRides.filter(r=>r.inProgress);
+
+    if(activeInDb.length>0){
+      // RULE: If there's an active ride and cooldown is active (<10 min since stop/fuel/dismiss)
+      //       → DO NOTHING AT ALL. Don't open app, don't show dialog.
+      if(inCooldown()){
+        setView('add');render();
+        showToast('Pokračuje aktivní jízda');
+        return;
+      }
+      // RULE: More than 10 min since last activity → show conflict dialog
+      // Pick the most recent active ride for the dialog
+      const mostRecent=activeInDb.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
       setView('add');render();
-      setTimeout(()=>showConflictDialog(active),100);
+      setTimeout(()=>showConflictDialog(mostRecent),100);
       return;
     }
+
+    // No active ride → zahájit novou
     const lastKm=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';
     initForm(lastKm);setView('add');
-    // AUTO START — get GPS then immediately save ride without any click needed
     showToast('🚗 Zahajuji jízdu automaticky...');
     navigator.geolocation?.getCurrentPosition(async pos=>{
       const{latitude:lat,longitude:lng}=pos.coords;
@@ -1386,7 +1418,9 @@ async function handleUrl(action){
       F.from=addr;F.fromGps={lat,lng};saveF();
       const inp=document.getElementById('inp-from');if(inp)inp.value=addr;
       const btn=document.getElementById('gps-from');if(btn){btn.className='gbtn done';btn.textContent='✓ GPS';}
-      // Auto-save ride immediately
+      // Double-check before write — race condition safety
+      const check=await dbAll('rides');
+      if(check.some(r=>r.inProgress)){showToast('Jízda už je aktivní');render();return;}
       const ts=await addTimestamp({type:'start',from:addr,date:F.date,time:F.time,gps:{lat,lng,accuracy:Math.round(pos.coords.accuracy),capturedAt:new Date().toISOString()}});
       const ride={date:F.date,time:F.time,driver:F.driver,from:addr,fromGps:{lat,lng},to:'',toGps:null,purpose:F.purpose||'',kmStart:F.kmStart,kmEnd:'',km:null,note:F.note,inProgress:true,createdAt:Date.now(),timestamp:ts};
       const id=await dbPut('rides',ride);
@@ -1394,7 +1428,8 @@ async function handleUrl(action){
       await reload();updateTotal();
       showToast('✅ Jízda zahájena automaticky · '+addr);render();
     },async()=>{
-      // No GPS — save with empty from, user fills later
+      const check=await dbAll('rides');
+      if(check.some(r=>r.inProgress)){showToast('Jízda už je aktivní');render();return;}
       const ts=await addTimestamp({type:'start',date:F.date,time:F.time});
       const ride={date:F.date,time:F.time,driver:F.driver,from:'',fromGps:null,to:'',toGps:null,purpose:F.purpose||'',kmStart:F.kmStart,kmEnd:'',km:null,note:F.note,inProgress:true,createdAt:Date.now(),timestamp:ts};
       const id=await dbPut('rides',ride);
@@ -1404,10 +1439,22 @@ async function handleUrl(action){
     },{timeout:8000,enableHighAccuracy:true});
 
   }else if(action==='end'){
-    const active=await getActiveRide();
-    if(active){
+    // If a modal is already open (previous end trigger) — don't stack another
+    if(document.getElementById('modals')?.innerHTML?.trim()){
+      showToast('Dialog je již otevřený');
+      return;
+    }
+    // Find ANY active ride directly from DB (don't rely on meta)
+    const allRides=await dbAll('rides');
+    const actives=allRides.filter(r=>r.inProgress).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    if(actives.length>1){
+      // Multiple active rides — warn user and show dialog for the most recent
       setView('add');render();
-      setTimeout(()=>showChoiceModal(active),100);
+      showToast('⚠ '+actives.length+' aktivních jízd — vyčisti v Nastavení');
+      setTimeout(()=>showChoiceModal(actives[0]),300);
+    }else if(actives.length===1){
+      setView('add');render();
+      setTimeout(()=>showChoiceModal(actives[0]),200);
     }else{
       initForm('');setView('add');showToast('Žádná aktivní jízda');
     }
@@ -1662,6 +1709,11 @@ function renderSettings(){
       <div class="icb">Appka se zamkne při otevření na cizím zařízení. Na tvém telefonu se odemyká automaticky (otisk zařízení).</div>
       <div id="pin-buttons" style="margin-top:12px;"></div>
     </div>
+    <div class="ic" style="border-color:rgba(248,113,113,.2);">
+      <div class="ict">🧹 Údržba dat</div>
+      <div class="icb">Pokud omylem vzniklo několik aktivních jízd (např. vinou starší verze), toto tlačítko zavře všechny kromě té nejnovější. Zavřené jízdy zůstanou v záznamech s poznámkou "automaticky uzavřeno".</div>
+      <button class="nbt en" onclick="cleanupDuplicatesUI()" style="margin-top:10px;">🧹 Vyčistit duplicitní aktivní jízdy</button>
+    </div>
     <div class="ic"><div class="ict">🔔 Večerní upomínky</div><div class="icb">Každý večer v 19:00, 20:00 a 21:00 — pouze pokud máš nedokončenou nebo neúplnou jízdu.</div>${perm==='granted'?`<button class="nbt ok">✓ Povoleno</button>`:perm==='denied'?`<button class="nbt no">Blokováno — povol v Nastavení Safari</button>`:`<button class="nbt en" onclick="reqNotif()">Povolit notifikace</button>`}</div>
     <div class="ic"><div class="ict">🚗 CarPlay automatizace</div><div class="icb"><strong>Připojení:</strong><code>https://davidkostron.github.io/kniha-j-zd/?action=start</code><strong style="display:block;margin-top:8px;">Odpojení:</strong><code class="o">https://davidkostron.github.io/kniha-j-zd/?action=end</code></div></div>
     <div class="ic"><div class="ict">📱 Přidat na plochu</div><div class="icb">Safari → Sdílet → <strong>Přidat na plochu</strong></div></div>
@@ -1705,7 +1757,12 @@ async function init(){
     window.history.replaceState({},'' ,url2);
   }
   if(action){await handleUrl(action);}
-  else{const lk=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';initForm(lk);}
+  else{
+    // Plain open — ensure any stale modal is cleared
+    const modals=document.getElementById('modals');
+    if(modals)modals.innerHTML='';
+    const lk=rides.filter(r=>r.kmEnd&&!r.inProgress)[0]?.kmEnd||'';initForm(lk);
+  }
   updateTotal();render();
 }
 init();
