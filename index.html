@@ -151,6 +151,9 @@ code{font-family:var(--mono);font-size:11px;color:var(--a);word-break:break-all;
 code.o{color:var(--o);}
 .empty{text-align:center;color:var(--m);padding:50px 20px;font-size:14px;}
 .incbanner{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.card{touch-action:pan-y;transition:transform .2s ease;position:relative;}
+.card.swiping{transition:none;}
+.card-swipe-hint{position:absolute;top:0;bottom:0;left:0;width:100%;background:linear-gradient(90deg,rgba(96,165,250,.15),transparent 40%);border-radius:12px;opacity:0;pointer-events:none;display:flex;align-items:center;padding-left:20px;font-size:16px;color:var(--bl);font-weight:600;transition:opacity .2s;}
 .choice-card{background:var(--s2);border:1px solid var(--b2);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
 .choice-card:active{transform:scale(.98);}
 .choice-card.pu{border-color:rgba(167,139,250,.4);}
@@ -223,19 +226,26 @@ const DEFAULT_VEHICLE={
   operator:'Premium life system LTD & co., kom. spol.'
 };
 const DRIVERS=['David','Manželka'];
-const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Schůzka se spolupracovníkem','Showroom Doksany','Kontrola zaměstnance','FreeHeating / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
+const PURPOSES=['Schůzka s investorem','Schůzka s klientem','Schůzka se spolupracovníkem','Potenciální klient','Showroom Doksany','Kontrola zaměstnance','FreeHeating / partnerská akce','Spolupráce s e-shopem / firmou','Focení / Instagram','FreeHeating – obchodní jednání','Administrativa / účetní','Jiné'];
+const HOME_ADDRESS_KEYWORDS=['lipovec 69','lipovec, 67978','lipovec'];
+function isHomeAddress(addr){
+  if(!addr)return false;
+  const a=addr.toLowerCase();
+  return HOME_ADDRESS_KEYWORDS.some(k=>a.includes(k));
+}
 
-const F={date:'',time:'',driver:'David',from:'',fromGps:null,to:'',toGps:null,purpose:'',purposeCustom:'',kmStart:'',kmEnd:'',note:''};
+const F={date:'',time:'',driver:'David',from:'',fromGps:null,to:'',toGps:null,purpose:'',purposeCustom:'',kmStart:'',kmEnd:'',note:'',returnTrip:false};
 
 function loadSaved(){
   try{const s=JSON.parse(localStorage.getItem('F6')||'{}');
     if(s.driver)F.driver=s.driver;if(s.purpose)F.purpose=s.purpose;
     if(s.purposeCustom)F.purposeCustom=s.purposeCustom;if(s.note)F.note=s.note;
     if(s.kmStart)F.kmStart=s.kmStart;
+    if(typeof s.returnTrip==='boolean')F.returnTrip=s.returnTrip;
   }catch(e){}
 }
 function saveF(){
-  try{localStorage.setItem('F6',JSON.stringify({driver:F.driver,purpose:F.purpose,purposeCustom:F.purposeCustom,note:F.note,kmStart:F.kmStart}));}catch(e){}
+  try{localStorage.setItem('F6',JSON.stringify({driver:F.driver,purpose:F.purpose,purposeCustom:F.purposeCustom,note:F.note,kmStart:F.kmStart,returnTrip:F.returnTrip}));}catch(e){}
 }
 function initForm(kmStart){
   F.date=todayStr();F.time=nowTime();F.from='';F.fromGps=null;F.to='';F.toGps=null;F.kmEnd='';
@@ -317,7 +327,14 @@ function getGPS(field,cb){
     const{latitude:lat,longitude:lng,accuracy}=pos.coords;
     const addr=await revGeo(lat,lng);
     const gpsData={lat,lng,accuracy:Math.round(accuracy),capturedAt:new Date().toISOString()};
-    if(field==='from'){F.from=addr;F.fromGps=gpsData;saveF();}
+    if(field==='from'){
+      F.from=addr;F.fromGps=gpsData;
+      // Auto-set "return trip" if starting away from home
+      if(addr&&!isHomeAddress(addr)){F.returnTrip=true;}
+      else{F.returnTrip=false;}
+      saveF();
+      const rtCb=document.getElementById('inp-returnTrip');if(rtCb)rtCb.checked=F.returnTrip;
+    }
     else{F.to=addr;F.toGps=gpsData;}
     const inp=document.getElementById('inp-'+field);if(inp)inp.value=addr;
     if(btn){btn.className='gbtn done';btn.textContent='✓ GPS';}
@@ -391,6 +408,23 @@ async function migrateFromOlderDBs(){
     const restored=await restoreFromLS();
     if(restored){await reload();updateTotal();showToast("✓ Data obnovena ze zálohy");}
   }
+}
+
+async function backfillAddresses(){
+  let updated=0;
+  for(const r of rides){
+    let changed=false;
+    if(r.fromGps&&(!r.from||/^\d+\.\d+,/.test(r.from))){
+      const addr=await revGeo(r.fromGps.lat,r.fromGps.lng);
+      if(addr&&!/^\d+\.\d+,/.test(addr)){r.from=addr;changed=true;}
+    }
+    if(r.toGps&&(!r.to||/^\d+\.\d+,/.test(r.to))){
+      const addr=await revGeo(r.toGps.lat,r.toGps.lng);
+      if(addr&&!/^\d+\.\d+,/.test(addr)){r.to=addr;changed=true;}
+    }
+    if(changed){await dbPut('rides',r);updated++;}
+  }
+  if(updated>0){await reload();render();showToast('🌐 Doplněno '+updated+' adres z GPS');}
 }
 
 async function cleanupDuplicateActiveRides(){
@@ -547,13 +581,49 @@ async function prepareAutoBackup(){
 // ── PDF MONTHLY EXPORT ────────────────────────────────────────────────────────
 function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`)){res();return;}const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
 
+async function loadFontAsBase64(url){
+  try{
+    const r=await fetch(url);if(!r.ok)return null;
+    const buf=await r.arrayBuffer();
+    let binary='';const bytes=new Uint8Array(buf);
+    for(let i=0;i<bytes.byteLength;i++)binary+=String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }catch(e){return null;}
+}
+
 async function generateMonthlyPDF(year,month){
+  showToast('📄 Generuji PDF...');
   // Load jsPDF from CDN
   try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');}catch{showToast('Chyba načtení PDF knihovny');return;}
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
 
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
+  // Load Roboto font for Czech diacritics support
+  try{
+    const fontB64=await loadFontAsBase64('https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.0/files/roboto-latin-ext-400-normal.woff');
+    if(fontB64){
+      // Try Roboto TTF instead — woff doesn't work with jsPDF
+    }
+    // Better: use raw TTF
+    const ttfB64=await loadFontAsBase64('https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Regular.ttf');
+    if(ttfB64){
+      doc.addFileToVFS('Roboto-Regular.ttf',ttfB64);
+      doc.addFont('Roboto-Regular.ttf','Roboto','normal');
+      const ttfBoldB64=await loadFontAsBase64('https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Bold.ttf');
+      if(ttfBoldB64){
+        doc.addFileToVFS('Roboto-Bold.ttf',ttfBoldB64);
+        doc.addFont('Roboto-Bold.ttf','Roboto','bold');
+      }
+      doc.setFont('Roboto','normal');
+      window._pdfFontOk=true;
+    }else{
+      window._pdfFontOk=false;
+    }
+  }catch(e){console.log('Font load fail:',e);window._pdfFontOk=false;}
+  // Helper to remove diacritics if font fails
+  const txt=(s)=>window._pdfFontOk?String(s||''):String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const setFont=(style)=>{if(window._pdfFontOk)doc.setFont('Roboto',style||'normal');else doc.setFont('helvetica',style||'normal');};
 
   const monthStart=`${year}-${String(month).padStart(2,'0')}-01`;
   const lastDay=new Date(year,month,0).getDate();
@@ -571,137 +641,164 @@ async function generateMonthlyPDF(year,month){
   const seal=await getSealForDate(monthEnd);
 
   // HEADER
-  doc.setFont('helvetica','bold');doc.setFontSize(16);
-  doc.text('KNIHA JIZD',105,18,{align:'center'});
+  setFont('bold');doc.setFontSize(16);
+  doc.text(txt('KNIHA JÍZD'),105,18,{align:'center'});
   doc.setFontSize(11);
-  doc.text(`${monthName} ${year}`,105,26,{align:'center'});
-  doc.setFont('helvetica','normal');doc.setFontSize(8);
-  doc.text(`Obdobi: ${monthStart} az ${monthEnd}`,105,32,{align:'center'});
+  doc.text(txt(monthName+' '+year),105,26,{align:'center'});
+  setFont('normal');doc.setFontSize(8);
+  doc.text(txt('Období: '+monthStart+' až '+monthEnd),105,32,{align:'center'});
 
   // Company box
   doc.setDrawColor(180);doc.rect(15,38,180,22);
-  doc.setFont('helvetica','bold');doc.setFontSize(9);
-  doc.text('SPOLECNOST',18,43);
-  doc.setFont('helvetica','normal');doc.setFontSize(9);
-  doc.text(COMPANY.name,18,48);
+  setFont('bold');doc.setFontSize(9);
+  doc.text(txt('SPOLEČNOST'),18,43);
+  setFont('normal');doc.setFontSize(9);
+  doc.text(txt(COMPANY.name),18,48);
   doc.setFontSize(8);
-  doc.text(`ICO: ${COMPANY.ico}  /  DIC: ${COMPANY.dic}`,18,53);
-  doc.text(COMPANY.address,18,57);
+  doc.text(txt('IČO: '+COMPANY.ico+'  /  DIČ: '+COMPANY.dic),18,53);
+  doc.text(txt(COMPANY.address),18,57);
 
   // Vehicle box (expanded)
   doc.rect(15,62,180,30);
-  doc.setFont('helvetica','bold');doc.setFontSize(9);
-  doc.text('VOZIDLO',18,67);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);
-  const vehLine=`${vehicle.make||'?'} ${vehicle.model||''}`;
-  doc.text(vehLine,18,72);
-  doc.text(`SPZ: ${vehicle.spz||'?'}   /   Rok: ${vehicle.year||'?'}   /   Palivo: ${vehicle.fuel||'?'}`,18,76);
-  if(vehicle.vin)doc.text(`VIN: ${vehicle.vin}`,18,80);
-  if(vehicle.engineKw)doc.text(`Vykon: ${vehicle.engineKw}   /   Prvni registrace: ${vehicle.firstReg||'?'}`,18,84);
-  if(vehicle.owner)doc.text(`Vlastnik: ${vehicle.owner}`,18,88);
-  if(vehicle.operator)doc.text(`Provozovatel: ${vehicle.operator}`,18,92);
+  setFont('bold');doc.setFontSize(9);
+  doc.text(txt('VOZIDLO'),18,67);
+  setFont('normal');doc.setFontSize(8);
+  doc.text(txt((vehicle.make||'?')+' '+(vehicle.model||'')),18,72);
+  doc.text(txt('SPZ: '+(vehicle.spz||'?')+'   /   Rok: '+(vehicle.year||'?')+'   /   Palivo: '+(vehicle.fuel||'?')),18,76);
+  if(vehicle.vin)doc.text(txt('VIN: '+vehicle.vin),18,80);
+  if(vehicle.engineKw)doc.text(txt('Výkon: '+vehicle.engineKw+'   /   První registrace: '+(vehicle.firstReg||'?')),18,84);
+  if(vehicle.owner)doc.text(txt('Vlastník: '+vehicle.owner),18,88);
+  if(vehicle.operator)doc.text(txt('Provozovatel: '+vehicle.operator),18,92);
 
   let y=99;
 
   // RIDES TABLE
-  doc.setFont('helvetica','bold');doc.setFontSize(10);
-  doc.text('JIZDY',15,y);y+=4;
+  setFont('bold');doc.setFontSize(10);
+  doc.text(txt('JÍZDY'),15,y);y+=4;
 
   const rideBody=periodRides.map(r=>[
     r.date.slice(5),
     (r.time||'').slice(0,5),
-    r.driver,
-    (r.from||'').substring(0,30),
-    (r.to||'').substring(0,30),
-    (r.purpose||'').substring(0,25),
-    r.kmStart||'',
-    r.kmEnd||'',
-    r.km!=null?String(r.km):''
+    txt(r.driver),
+    txt((r.from||'').substring(0,28)),
+    txt((r.to||'').substring(0,28)),
+    txt((r.purpose||'').substring(0,22)+(r.returnTrip?' (zpět)':'')),
+    r.kmStart||'',r.kmEnd||'',
+    r.km!=null?String(r.km):'',
+    r.timestamp?.verified?'✓':(r.timestamp?.hash?'•':'')
   ]);
 
   doc.autoTable({
     startY:y,
-    head:[['Datum','Cas','Ridic','Odkud','Kam','Ucel','KM start','KM konec','KM']],
+    head:[[txt('Datum'),txt('Čas'),txt('Řidič'),txt('Odkud'),txt('Kam'),txt('Účel'),txt('KM start'),txt('KM konec'),txt('KM'),'🔏']],
     body:rideBody,
-    styles:{fontSize:7,cellPadding:1.2},
-    headStyles:{fillColor:[50,55,70],textColor:[255,255,255],fontSize:7},
+    styles:{fontSize:7,cellPadding:1.2,font:window._pdfFontOk?'Roboto':'helvetica'},
+    headStyles:{fillColor:[50,55,70],textColor:[255,255,255],fontSize:7,font:window._pdfFontOk?'Roboto':'helvetica',fontStyle:'bold'},
     theme:'grid'
   });
   y=doc.lastAutoTable.finalY+6;
 
   // RIDES SUMMARY
   const totalKm=periodRides.reduce((a,r)=>a+(r.km||0),0);
-  doc.setFontSize(8);doc.setFont('helvetica','bold');
-  doc.text(`CELKEM JIZD: ${periodRides.length}   |   CELKEM KM: ${totalKm.toLocaleString('cs-CZ')}`,15,y);
+  doc.setFontSize(8);setFont('bold');
+  doc.text(txt('CELKEM JÍZD: '+periodRides.length+'   |   CELKEM KM: '+totalKm.toLocaleString('cs-CZ')),15,y);
   y+=8;
 
   // FUELS TABLE
   if(periodFuels.length>0){
     if(y>250){doc.addPage();y=20;}
-    doc.setFont('helvetica','bold');doc.setFontSize(10);
-    doc.text('TANKOVANI',15,y);y+=4;
+    setFont('bold');doc.setFontSize(10);
+    doc.text(txt('TANKOVÁNÍ'),15,y);y+=4;
 
     const fuelBody=periodFuels.map(f=>[
       (f.date||'').slice(5),
       (f.time||'').slice(0,5),
-      (f.station||'').substring(0,25),
+      txt((f.station||'').substring(0,22)),
       f.km||'',
       f.liters!=null?f.liters+' l':'',
-      f.pricePer!=null?f.pricePer+' Kc':'',
-      f.priceTotal!=null?f.priceTotal+' Kc':''
+      f.pricePer!=null?f.pricePer+' Kč':'',
+      f.priceTotal!=null?f.priceTotal+' Kč':'',
+      f.fullTank===false?'':'✓',
+      f.additive?'✓':'',
+      f.timestamp?.verified?'✓':(f.timestamp?.hash?'•':'')
     ]);
 
     doc.autoTable({
       startY:y,
-      head:[['Datum','Cas','Stanice','Tachometr','Litru','Kc/l','Celkem']],
+      head:[[txt('Datum'),txt('Čas'),txt('Stanice'),txt('Tachometr'),txt('Litry'),txt('Kč/l'),txt('Celkem'),txt('Plná'),txt('Adit.'),'🔏']],
       body:fuelBody,
-      styles:{fontSize:7,cellPadding:1.2},
-      headStyles:{fillColor:[60,100,160],textColor:[255,255,255],fontSize:7},
+      styles:{fontSize:7,cellPadding:1.2,font:window._pdfFontOk?'Roboto':'helvetica'},
+      headStyles:{fillColor:[60,100,160],textColor:[255,255,255],fontSize:7,font:window._pdfFontOk?'Roboto':'helvetica',fontStyle:'bold'},
       theme:'grid'
     });
     y=doc.lastAutoTable.finalY+6;
 
     const totalFuel=periodFuels.reduce((a,f)=>a+(parseFloat(f.priceTotal)||0),0);
     const totalL=periodFuels.reduce((a,f)=>a+(parseFloat(f.liters)||0),0);
-    doc.setFontSize(8);doc.setFont('helvetica','bold');
-    doc.text(`CELKEM TANKOVANI: ${periodFuels.length}   |   LITRU: ${totalL.toFixed(1)}   |   CELKEM: ${Math.round(totalFuel).toLocaleString('cs-CZ')} Kc`,15,y);
+    doc.setFontSize(8);setFont('bold');
+    doc.text(txt('CELKEM TANKOVÁNÍ: '+periodFuels.length+'   |   LITRŮ: '+totalL.toFixed(1)+'   |   CELKEM: '+Math.round(totalFuel).toLocaleString('cs-CZ')+' Kč'),15,y);
+    y+=6;
+
+    // Consumption full-to-full
+    setFont('bold');doc.setFontSize(9);
+    const fts=computeFullTankStats(periodFuels);
+    if(fts.avgConsumption){
+      setFont('normal');doc.setFontSize(8);
+      doc.text(txt('Průměrná spotřeba (full-to-full): '+fts.avgConsumption+' l/100km   |   '+(fts.avgCostPerKm||0).toFixed(2)+' Kč/km   |   Ověřeno na '+fts.totalKmTracked.toLocaleString('cs-CZ')+' km'),15,y);
+    }
     y+=8;
   }
 
   // GPS VERIFICATION PAGE
   doc.addPage();y=20;
-  doc.setFont('helvetica','bold');doc.setFontSize(12);
-  doc.text('GPS OVERENI JIZD',15,y);y+=7;
-  doc.setFont('helvetica','normal');doc.setFontSize(8);
-  doc.text('Kazda jizda je lokacne podepsana souradnicemi v okamziku zachyceni GPS.',15,y);y+=7;
+  setFont('bold');doc.setFontSize(12);
+  doc.text(txt('GPS OVĚŘENÍ JÍZD A TANKOVÁNÍ'),15,y);y+=7;
+  setFont('normal');doc.setFontSize(8);
+  doc.text(txt('Každý záznam je lokačně podepsán souřadnicemi v okamžiku zachycení GPS a kryptografickým hashem (SHA-256).'),15,y);y+=7;
 
-  periodRides.slice(0,40).forEach(r=>{
+  periodRides.forEach(r=>{
     if(y>275){doc.addPage();y=20;}
-    doc.setFont('helvetica','bold');doc.setFontSize(8);
-    doc.text(`${r.date} ${(r.time||'').slice(0,5)} — ${r.driver}`,15,y);y+=4;
-    doc.setFont('helvetica','normal');doc.setFontSize(7);
+    setFont('bold');doc.setFontSize(8);
+    doc.text(txt(r.date+' '+(r.time||'').slice(0,5)+' — '+r.driver+(r.returnTrip?' ↩ Cesta zpět':'')),15,y);y+=4;
+    setFont('normal');doc.setFontSize(7);
     if(r.fromGps){
-      doc.text(`Start: ${(r.from||'').substring(0,45)}`,18,y);y+=3.2;
-      doc.text(`  GPS: ${r.fromGps.lat.toFixed(6)}, ${r.fromGps.lng.toFixed(6)} (+/- ${r.fromGps.accuracy||'?'}m)`,18,y);y+=3.2;
-      if(r.timestamp?.hash)doc.text(`  Hash: ${r.timestamp.hash.slice(0,32)}...`,18,y);y+=3.5;
+      doc.text(txt('Start: '+(r.from||'').substring(0,55)),18,y);y+=3.2;
+      doc.text(txt('  GPS: '+r.fromGps.lat.toFixed(6)+', '+r.fromGps.lng.toFixed(6)+' (±'+(r.fromGps.accuracy||'?')+'m)'),18,y);y+=3.2;
+      if(r.timestamp?.hash)doc.text(txt('  Hash: '+r.timestamp.hash.slice(0,32)+'… '+(r.timestamp.verified?'(ověřeno serverem)':'(lokální)')),18,y);y+=3.5;
     }
     if(r.toGps){
-      doc.text(`Cil:  ${(r.to||'').substring(0,45)}`,18,y);y+=3.2;
-      doc.text(`  GPS: ${r.toGps.lat.toFixed(6)}, ${r.toGps.lng.toFixed(6)} (+/- ${r.toGps.accuracy||'?'}m)`,18,y);y+=3.2;
-      if(r.timestampEnd?.hash)doc.text(`  Hash: ${r.timestampEnd.hash.slice(0,32)}...`,18,y);y+=3.5;
+      doc.text(txt('Cíl: '+(r.to||'').substring(0,55)),18,y);y+=3.2;
+      doc.text(txt('  GPS: '+r.toGps.lat.toFixed(6)+', '+r.toGps.lng.toFixed(6)+' (±'+(r.toGps.accuracy||'?')+'m)'),18,y);y+=3.2;
+      if(r.timestampEnd?.hash)doc.text(txt('  Hash: '+r.timestampEnd.hash.slice(0,32)+'… '+(r.timestampEnd.verified?'(ověřeno serverem)':'(lokální)')),18,y);y+=3.5;
     }
     y+=1.5;
   });
+
+  // Fuel hashes
+  if(periodFuels.length>0){
+    if(y>260){doc.addPage();y=20;}
+    setFont('bold');doc.setFontSize(10);
+    doc.text(txt('TANKOVÁNÍ — kryptografická ověření'),15,y);y+=6;
+    periodFuels.forEach(f=>{
+      if(y>275){doc.addPage();y=20;}
+      setFont('bold');doc.setFontSize(8);
+      doc.text(txt((f.date||'')+' '+(f.time||'').slice(0,5)+' — '+(f.station||'?')),15,y);y+=4;
+      setFont('normal');doc.setFontSize(7);
+      if(f.gps)doc.text(txt('  GPS: '+f.gps.lat.toFixed(6)+', '+f.gps.lng.toFixed(6)+(f.gps.accuracy?' (±'+f.gps.accuracy+'m)':'')),18,y),y+=3.2;
+      if(f.timestamp?.hash)doc.text(txt('  Hash: '+f.timestamp.hash.slice(0,32)+'… '+(f.timestamp.verified?'(ověřeno serverem)':'(lokální)')),18,y),y+=3.5;
+      y+=1;
+    });
+  }
 
   // FOOTER — digital signature on every page
   const pageCount=doc.internal.getNumberOfPages();
   for(let i=1;i<=pageCount;i++){
     doc.setPage(i);
-    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);
-    doc.text(`${COMPANY.name} / ICO: ${COMPANY.ico}`,15,289);
-    doc.text(`Strana ${i}/${pageCount}`,195,289,{align:'right'});
-    if(seal?.verified)doc.text(`TSR: ${seal.combinedHash.slice(0,16)}... (freetsa.org)`,105,289,{align:'center'});
-    else if(seal)doc.text(`Hash: ${seal.combinedHash.slice(0,16)}...`,105,289,{align:'center'});
+    setFont('normal');doc.setFontSize(7);doc.setTextColor(100);
+    doc.text(txt(COMPANY.name+' / IČO: '+COMPANY.ico),15,289);
+    doc.text(txt('Strana '+i+'/'+pageCount),195,289,{align:'right'});
+    if(seal?.verified)doc.text(txt('TSR: '+seal.combinedHash.slice(0,16)+'… (freetsa.org)'),105,289,{align:'center'});
+    else if(seal)doc.text(txt('Hash: '+seal.combinedHash.slice(0,16)+'…'),105,289,{align:'center'});
     doc.setTextColor(0);
   }
 
@@ -770,9 +867,10 @@ async function startRide(){
   if(allR.some(r=>r.inProgress)){showToast('Již existuje aktivní jízda — dokonči ji první');return;}
   const pf=purpose==='Jiné'?purposeCustom:purpose;
   if(pf)localStorage.setItem('lp',pf);
-  F.from=from;F.purpose=purpose;F.purposeCustom=purposeCustom;F.kmStart=kmStart;F.note=note;saveF();
-  const ts=await addTimestamp({type:'start',from,date:F.date,time:F.time,driver:F.driver,gps:F.fromGps});
-  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to:'',toGps:null,purpose:pf||'',kmStart,kmEnd:'',km:null,note,inProgress:true,createdAt:Date.now(),timestamp:ts};
+  const returnTrip=document.getElementById('inp-returnTrip')?.checked||F.returnTrip||false;
+  F.from=from;F.purpose=purpose;F.purposeCustom=purposeCustom;F.kmStart=kmStart;F.note=note;F.returnTrip=returnTrip;saveF();
+  const ts=await addTimestamp({type:'start',from,date:F.date,time:F.time,driver:F.driver,gps:F.fromGps,returnTrip});
+  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to:'',toGps:null,purpose:pf||'',kmStart,kmEnd:'',km:null,note,inProgress:true,createdAt:Date.now(),timestamp:ts,returnTrip};
   const id=await dbPut('rides',ride);
   activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
   await reload();updateTotal();closeModal();showToast('🚗 Jízda zahájena');
@@ -791,7 +889,8 @@ async function saveFullRide(){
   const pf=purpose==='Jiné'?purposeCustom:purpose;
   if(pf)localStorage.setItem('lp',pf);
   const km=kmDiff(kmStart,kmEnd);
-  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to,toGps:F.toGps||null,purpose:pf||'',kmStart,kmEnd,km,note,inProgress:false,createdAt:Date.now()};
+  const returnTrip=document.getElementById('inp-returnTrip')?.checked||F.returnTrip||false;
+  const ride={date:F.date,time:F.time,driver:F.driver,from,fromGps:F.fromGps,to,toGps:F.toGps||null,purpose:pf||'',kmStart,kmEnd,km,note,inProgress:false,createdAt:Date.now(),returnTrip};
   if(editId){ride.id=editId;await dbPut('rides',ride);editId=null;}else await dbPut('rides',ride);
   F.kmStart=kmEnd||'';F.from='';F.to='';F.fromGps=null;F.toGps=null;F.kmEnd='';saveF();
   await reload();updateTotal();showToast('✓ Jízda uložena');
@@ -853,12 +952,48 @@ async function editRide(id){
   editId=id;setView('add');
 }
 
+function csvEscape(v){
+  if(v==null)return'';
+  const s=String(v);
+  if(s.includes(';')||s.includes('"')||s.includes('\n'))return'"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
 function exportCSV(){
-  const src=rides;
-  const hdr='Datum;Čas;Řidič;Odkud;Kam;Účel;KM start;KM konec;KM;Poznámka';
-  const rows=src.map(r=>[r.date,r.time||'',r.driver,r.from,r.to,r.purpose,r.kmStart,r.kmEnd,r.km??'',r.note??''].join(';'));
-  const blob=new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`jizdy-${todayStr()}.csv`;a.click();
+  const src=rides.filter(r=>!r.inProgress);
+  const hdr=['Datum','Čas odjezdu','Datum příjezdu','Čas příjezdu','Řidič','Odkud','Kam','GPS odkud','GPS kam','Účel','Cesta zpět','KM odjezd','KM příjezd','KM celkem','Poznámka','Hash startu','Hash konce','Ověřeno'].join(';');
+  const rows=src.map(r=>[
+    r.date,r.time||'',r.arrivalDate||r.date,r.arrivalTime||r.time||'',
+    r.driver,r.from||'',r.to||'',
+    r.fromGps?`${r.fromGps.lat.toFixed(6)},${r.fromGps.lng.toFixed(6)}±${r.fromGps.accuracy||'?'}m`:'',
+    r.toGps?`${r.toGps.lat.toFixed(6)},${r.toGps.lng.toFixed(6)}±${r.toGps.accuracy||'?'}m`:'',
+    r.purpose||'',r.returnTrip?'Ano':'',
+    r.kmStart||'',r.kmEnd||'',r.km??'',r.note||'',
+    r.timestamp?.hash?r.timestamp.hash.slice(0,16)+'…':'',
+    r.timestampEnd?.hash?r.timestampEnd.hash.slice(0,16)+'…':'',
+    r.timestamp?.verified?'Server':(r.timestamp?.hash?'Lokální':'Žádný')
+  ].map(csvEscape).join(';'));
+  const csv='\uFEFF'+[hdr,...rows].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`KnihaJizd_${todayStr()}.csv`;a.click();
+  showToast('✓ CSV staženo');
+}
+
+function exportFuelsCSV(){
+  const hdr=['Datum','Čas','Stanice','Tachometr KM','Litry','Kč/litr','Celkem Kč','Plná nádrž','Aditivum','GPS','Hash','Ověřeno','Poznámka'].join(';');
+  const rows=fuels.map(f=>[
+    f.date||'',f.time||'',f.station||'',f.km||'',
+    f.liters??'',f.pricePer??'',f.priceTotal??'',
+    f.fullTank===false?'Ne':'Ano',
+    f.additive?'Ano':'',
+    f.gps?`${f.gps.lat.toFixed(6)},${f.gps.lng.toFixed(6)}`:'',
+    f.timestamp?.hash?f.timestamp.hash.slice(0,16)+'…':'',
+    f.timestamp?.verified?'Server':(f.timestamp?.hash?'Lokální':'Žádný'),
+    f.note||''
+  ].map(csvEscape).join(';'));
+  const csv='\uFEFF'+[hdr,...rows].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`KnihaJizd_Tankovani_${todayStr()}.csv`;a.click();
+  showToast('✓ CSV tankování staženo');
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
@@ -1034,6 +1169,11 @@ function showFuelModal(rideId){
         <div class="fld"><div class="flbl">Celkem Kč</div><input id="fuel-t" class="fi" type="number" step="0.01" placeholder="1660.50" oninput="fuelCalc('t')"></div>
         <div id="fuel-calc" style="font-size:12px;color:var(--g);margin-top:4px;min-height:16px;"></div>
       </div>
+      <div style="background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:13px;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;"><input id="fuel-fulltank" type="checkbox" checked style="width:20px;height:20px;accent-color:var(--a);"><span style="font-size:14px;">⛽ <strong>Plná nádrž</strong></span></label>
+        <div style="font-size:11px;color:var(--m2);margin-left:30px;margin-top:-4px;margin-bottom:8px;">Důležité pro výpočet spotřeby. Zaškrtni pokud jsi natankoval do plna.</div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;"><input id="fuel-additive" type="checkbox" style="width:20px;height:20px;accent-color:var(--bl);"><span style="font-size:14px;">🧪 Přidáno aditivum</span></label>
+      </div>
       <div class="fld"><div class="flbl">Poznámka</div><input id="fuel-note" class="fi" placeholder="Platba kartou..."></div>
       <button class="btn btn-bl" onclick="doFuel(${rideId||'null'})">⛽ Uložit tankování</button>
       <button class="btn btn-gh" onclick="closeModal()">Zrušit</button>
@@ -1092,16 +1232,52 @@ function showFuelModal(rideId){
     const p=parseFloat(document.getElementById('fuel-p')?.value)||null;
     let t=parseFloat(document.getElementById('fuel-t')?.value)||null;
     if(!t&&l&&p)t=Math.round(l*p*100)/100;
-    const fts=await addTimestamp({type:'fuel',liters:l,priceTotal:t,date:todayStr(),gps:fGps});
-    await saveFuel({rideId:rideId||null,date:todayStr(),time:nowTime(),station:document.getElementById('fuel-station')?.value||'',km:document.getElementById('fuel-km')?.value||'',liters:l,pricePer:p,priceTotal:t,gps:fGps,note:document.getElementById('fuel-note')?.value||'',timestamp:fts,photo:_pendingReceiptPhoto||null});
+    const fullTank=document.getElementById('fuel-fulltank')?.checked??true;
+    const additive=document.getElementById('fuel-additive')?.checked??false;
+    const fts=await addTimestamp({type:'fuel',liters:l,priceTotal:t,date:todayStr(),gps:fGps,fullTank});
+    await saveFuel({rideId:rideId||null,date:todayStr(),time:nowTime(),station:document.getElementById('fuel-station')?.value||'',km:document.getElementById('fuel-km')?.value||'',liters:l,pricePer:p,priceTotal:t,gps:fGps,note:document.getElementById('fuel-note')?.value||'',timestamp:fts,photo:_pendingReceiptPhoto||null,fullTank,additive});
     _pendingReceiptPhoto=null;
   };
   navigator.geolocation?.getCurrentPosition(async pos=>{
-    const{latitude:lat,longitude:lng}=pos.coords;fGps={lat,lng};
+    const{latitude:lat,longitude:lng,accuracy}=pos.coords;fGps={lat,lng,accuracy:Math.round(accuracy),capturedAt:new Date().toISOString()};
     const addr=await revGeo(lat,lng);
     const el=document.getElementById('fuel-status');if(el)el.textContent='📍 '+addr;
-    const si=document.getElementById('fuel-station');if(si&&!si.value)si.placeholder=addr;
+    // Auto-detect gas station brand from OSM
+    const brand=await detectGasStation(lat,lng);
+    const si=document.getElementById('fuel-station');
+    if(si){
+      if(brand)si.value=brand;
+      else if(!si.value)si.placeholder=addr;
+    }
   },()=>{const el=document.getElementById('fuel-status');if(el)el.textContent='GPS nedostupná';},{timeout:8000,enableHighAccuracy:true});
+}
+
+// Gas station brand detection via OpenStreetMap Overpass API
+async function detectGasStation(lat,lng){
+  try{
+    const query=`[out:json][timeout:5];node[amenity=fuel](around:150,${lat},${lng});out tags;`;
+    const resp=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query),{signal:AbortSignal.timeout(5000)});
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    if(!data.elements||data.elements.length===0)return null;
+    // Take closest/first
+    const el=data.elements[0];
+    const tags=el.tags||{};
+    const brand=tags.brand||tags.name||tags.operator||null;
+    if(!brand)return null;
+    // Normalize known Czech brands
+    const b=brand.toLowerCase();
+    if(b.includes('shell'))return'Shell';
+    if(b.includes('benzina'))return'Benzina';
+    if(b.includes('orlen'))return'Orlen';
+    if(b.includes('omv'))return'OMV';
+    if(b.includes('eurooil')||b.includes('euro oil'))return'EuroOil';
+    if(b.includes('mol'))return'MOL';
+    if(b.includes('globus'))return'Globus';
+    if(b.includes('makro'))return'Makro';
+    if(b.includes('tesco'))return'Tesco';
+    return brand; // return as-is if unknown
+  }catch(e){return null;}
 }
 
 function showEndModal(rideId){
@@ -1415,14 +1591,17 @@ async function handleUrl(action){
     navigator.geolocation?.getCurrentPosition(async pos=>{
       const{latitude:lat,longitude:lng}=pos.coords;
       const addr=await revGeo(lat,lng);
-      F.from=addr;F.fromGps={lat,lng};saveF();
+      F.from=addr;F.fromGps={lat,lng};
+      const isReturn=!isHomeAddress(addr);
+      F.returnTrip=isReturn;saveF();
       const inp=document.getElementById('inp-from');if(inp)inp.value=addr;
       const btn=document.getElementById('gps-from');if(btn){btn.className='gbtn done';btn.textContent='✓ GPS';}
+      const rtCb=document.getElementById('inp-returnTrip');if(rtCb)rtCb.checked=isReturn;
       // Double-check before write — race condition safety
       const check=await dbAll('rides');
       if(check.some(r=>r.inProgress)){showToast('Jízda už je aktivní');render();return;}
-      const ts=await addTimestamp({type:'start',from:addr,date:F.date,time:F.time,gps:{lat,lng,accuracy:Math.round(pos.coords.accuracy),capturedAt:new Date().toISOString()}});
-      const ride={date:F.date,time:F.time,driver:F.driver,from:addr,fromGps:{lat,lng},to:'',toGps:null,purpose:F.purpose||'',kmStart:F.kmStart,kmEnd:'',km:null,note:F.note,inProgress:true,createdAt:Date.now(),timestamp:ts};
+      const ts=await addTimestamp({type:'start',from:addr,date:F.date,time:F.time,gps:{lat,lng,accuracy:Math.round(pos.coords.accuracy),capturedAt:new Date().toISOString()},returnTrip:isReturn});
+      const ride={date:F.date,time:F.time,driver:F.driver,from:addr,fromGps:{lat,lng},to:'',toGps:null,purpose:F.purpose||'',kmStart:F.kmStart,kmEnd:'',km:null,note:F.note,inProgress:true,createdAt:Date.now(),timestamp:ts,returnTrip:isReturn};
       const id=await dbPut('rides',ride);
       activeRideId=id;await dbPut('meta',{key:'activeRideId',value:id});
       await reload();updateTotal();
@@ -1447,6 +1626,15 @@ async function handleUrl(action){
     // Find ANY active ride directly from DB (don't rely on meta)
     const allRides=await dbAll('rides');
     const actives=allRides.filter(r=>r.inProgress).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    // CarPlay protection — ignore end within 3 minutes of ride start
+    if(actives.length>0){
+      const mostRecent=actives[0];
+      const ageMs=Date.now()-(mostRecent.createdAt||0);
+      if(ageMs<3*60*1000){
+        showToast('🛡 Jízda chráněna proti CarPlay přepínání (3 min)');
+        return;
+      }
+    }
     if(actives.length>1){
       // Multiple active rides — warn user and show dialog for the most recent
       setView('add');render();
@@ -1476,6 +1664,35 @@ function chkNotif(h){
 }
 
 // ── DATE HELPERS ──────────────────────────────────────────────────────────────
+// Compute consumption between full tanks (full-to-full method)
+function computeFullTankStats(fuelList){
+  // Sort chronologically by km (or createdAt)
+  const sorted=[...fuelList].filter(f=>f.km&&f.liters).sort((a,b)=>parseFloat(a.km)-parseFloat(b.km));
+  const fullTanks=sorted.filter(f=>f.fullTank!==false); // treat undefined as full for backward compat
+  if(fullTanks.length<2)return{avgConsumption:null,tankStats:[],totalKmTracked:0,totalLitersTracked:0,totalCostTracked:0};
+  const tankStats=[];
+  let totalKm=0,totalLiters=0,totalCost=0;
+  for(let i=1;i<fullTanks.length;i++){
+    const prev=fullTanks[i-1];
+    const curr=fullTanks[i];
+    const kmDrv=parseFloat(curr.km)-parseFloat(prev.km);
+    if(kmDrv<=0)continue;
+    // Sum liters + cost from all fuels between prev (exclusive) and curr (inclusive)
+    const prevKm=parseFloat(prev.km);
+    const currKm=parseFloat(curr.km);
+    const inBetween=sorted.filter(f=>parseFloat(f.km)>prevKm&&parseFloat(f.km)<=currKm);
+    const liters=inBetween.reduce((a,f)=>a+(parseFloat(f.liters)||0),0);
+    const cost=inBetween.reduce((a,f)=>a+(parseFloat(f.priceTotal)||0),0);
+    const consumption=(liters/kmDrv)*100;
+    const costPerKm=cost/kmDrv;
+    tankStats.push({fromKm:prevKm,toKm:currKm,km:kmDrv,liters:+liters.toFixed(2),cost:+cost.toFixed(2),consumption:+consumption.toFixed(2),costPerKm:+costPerKm.toFixed(2),date:curr.date,station:curr.station});
+    totalKm+=kmDrv;totalLiters+=liters;totalCost+=cost;
+  }
+  const avgConsumption=totalKm>0?(totalLiters/totalKm*100):null;
+  const avgCostPerKm=totalKm>0?(totalCost/totalKm):null;
+  return{avgConsumption:avgConsumption?+avgConsumption.toFixed(2):null,avgCostPerKm:avgCostPerKm?+avgCostPerKm.toFixed(2):null,tankStats,totalKmTracked:totalKm,totalLitersTracked:totalLiters,totalCostTracked:totalCost};
+}
+
 function getPeriodRange(period){
   const now=new Date();
   let from,to=todayStr();
@@ -1533,6 +1750,8 @@ async function attachSettingsListeners(){
 function attachAddListeners(){
   setupAC('inp-from','ac-from','from');
   setupAC('inp-to','ac-to','to');
+  const rt=document.getElementById('inp-returnTrip');
+  if(rt)rt.addEventListener('change',()=>{F.returnTrip=rt.checked;saveF();});
   const ks=document.getElementById('inp-kmStart');
   const ke=document.getElementById('inp-kmEnd');
   if(ks)ks.addEventListener('input',()=>{F.kmStart=ks.value;saveF();updateKmDiffDisplay();});
@@ -1565,6 +1784,7 @@ function renderAdd(){
     <div class="fld"><div class="flbl">Kam</div><div class="gps-row"><div class="fld" style="flex:1;margin-bottom:0;position:relative;"><input id="inp-to" class="fi" placeholder="Začni psát adresu..." value="${F.to}"><div id="ac-to"></div></div><button id="gps-to" class="gbtn ${F.toGps?'done':''}" onclick="getGPS('to')">${F.toGps?'✓ GPS':'📍 GPS'}</button></div></div>
     <div class="fld"><div class="flbl">Účel jízdy</div><select id="inp-purpose" class="fi"><option value="">— vyber účel —</option>${PURPOSES.map(p=>`<option value="${p}" ${F.purpose===p?'selected':''}>${p}</option>`).join('')}</select></div>
     <div id="purp-custom-wrap" style="display:${F.purpose==='Jiné'?'block':'none'}"><div class="fld"><div class="flbl">Upřesni</div><input id="inp-purposeCustom" class="fi" placeholder="Popiš účel..." value="${F.purposeCustom}"></div></div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;margin-bottom:12px;"><input id="inp-returnTrip" type="checkbox" ${F.returnTrip?'checked':''} style="width:20px;height:20px;accent-color:var(--a);"><span style="font-size:13px;">↩ <strong>Cesta zpět</strong> <span style="color:var(--m2);font-size:11px;">(účel zůstává stejný, jen směr)</span></span></label>
     <div class="fld"><div class="flbl">Poznámka</div><input id="inp-note" class="fi" placeholder="Jméno klienta, agenda..." value="${F.note}"></div>
     <div class="grid2">
       <div class="fld"><div class="flbl">KM — odjezd</div><input id="inp-kmStart" class="fi" type="number" placeholder="${lastKmEnd||'42500'}" value="${F.kmStart}"></div>
@@ -1587,12 +1807,12 @@ function renderList(){
   const done=rides.filter(r=>!r.inProgress);
   const totalKm=done.reduce((a,r)=>a+(r.km||0),0);
   return`
-    <div class="frow"><button class="expbtn" onclick="exportCSV()">↓ CSV</button></div>
+    <div class="frow"><button class="expbtn" onclick="exportCSV()">↓ CSV jízdy</button><button class="expbtn" onclick="exportFuelsCSV()">↓ CSV tankování</button></div>
     ${all.length>0?`<div class="rmeta"><span>${done.length} jízd</span><span>${totalKm.toLocaleString('cs-CZ')} km</span></div>`:''}
     ${all.length===0?`<div class="empty">Žádné záznamy</div>`:all.map(item=>{
       if(item._t==='stop')return`<div class="card stop"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(167,139,250,.1);color:var(--pu);font-weight:600;">🅿 ZASTÁVKA</span></div><div class="croute">${item.addr||'Poloha nezaznamenána'}</div>${item.note?`<div class="cnote">${item.note}</div>`:''}</div>`;
-      if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters!=null?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal!=null?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:5px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ',{minimumFractionDigits:2})} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}</div>`:''}<div class="cact">${item.photo?`<button class="abtn" onclick="showReceiptPhoto('${item.photo}')">📷 Účtenka</button>`:''}<button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
-      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}</div>${item.arrivalDate&&(item.arrivalDate!==item.date||item.arrivalTime!==item.time)?`<div style="font-size:11px;color:var(--m2);">Příjezd: ${fmtD(item.arrivalDate)} ${item.arrivalTime||''}</div>`:''}${item.timestamp?`<div style="font-size:10px;color:var(--m2);margin-top:2px;">${tsLabel(item.timestamp)}</div>`:''}
+      if(item._t==='fuel')return`<div class="card fuel"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)} ${item.time||''}</span><span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">⛽</span></div><div class="croute">${item.station||'Čerpací stanice'}</div>${item.km?`<div class="cpurp">Tachometr: ${item.km} km</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:12px;">${item.liters!=null?`<div class="ckm">${item.liters}</div><div class="cklbl">litrů</div>`:''}</div></div>${item.priceTotal!=null?`<div style="font-family:var(--mono);font-size:13px;color:var(--bl);margin-top:5px;">${parseFloat(item.priceTotal).toLocaleString('cs-CZ',{minimumFractionDigits:2})} Kč${item.pricePer?' · '+item.pricePer+' Kč/l':''}</div>`:''}${item.fullTank!==false||item.additive?`<div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">${item.fullTank!==false?'<span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(74,222,128,.1);color:var(--g);font-weight:600;">⛽ PLNÁ</span>':''}${item.additive?'<span style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(96,165,250,.1);color:var(--bl);font-weight:600;">🧪 ADITIVUM</span>':''}</div>`:''}<div class="cact">${item.photo?`<button class="abtn" onclick="showReceiptPhoto('${item.photo}')">📷 Účtenka</button>`:''}<button class="abtn del" onclick="delFuel(${item.id})">🗑</button></div></div>`;
+      return`<div class="card ${item.inProgress?'prog':isInc(item)?'inc':''}" data-ride-id="${item.id}"><div class="ctop"><div style="flex:1;min-width:0;"><div class="cmeta"><span class="cdate">${fmtD(item.date)}${item.time?' '+item.time:''}</span><span class="cdrv ${item.driver==='David'?'dd':'dm'}">${item.driver}</span>${item.inProgress?'<span style="font-size:9px;color:var(--o);background:rgba(251,146,60,.1);padding:2px 7px;border-radius:20px;font-weight:600;">AKTIVNÍ</span>':''}</div><div class="croute">${item.from||'?'} → ${item.to||'...'}</div><div class="cpurp">${item.purpose||'<span style="color:var(--r)">Účel chybí</span>'}${item.returnTrip?' <span style="display:inline-block;font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(232,197,71,.15);color:var(--a);font-weight:600;margin-left:4px;">↩ ZPĚT</span>':''}</div>${item.arrivalDate&&(item.arrivalDate!==item.date||item.arrivalTime!==item.time)?`<div style="font-size:11px;color:var(--m2);">Příjezd: ${fmtD(item.arrivalDate)} ${item.arrivalTime||''}</div>`:''}${item.timestamp?`<div style="font-size:10px;color:var(--m2);margin-top:2px;">${tsLabel(item.timestamp)}</div>`:''}
               ${item.timestampEnd?`<div style="font-size:10px;color:var(--m2);">${tsLabel(item.timestampEnd)}</div>`:''}${item.note?`<div class="cnote">${item.note}</div>`:''}</div><div style="flex-shrink:0;margin-left:12px;text-align:right;">${item.km!=null?`<div class="ckm">${item.km}</div><div class="cklbl">km</div>`:'<div style="color:var(--m);font-size:12px;">—</div>'}</div></div>${item.inProgress?`<div class="cbadge" style="color:var(--o);">⏳ Probíhá</div>`:''}<div class="cact">${item.inProgress?`<button class="abtn fin" onclick="showChoiceModal(rides.find(r=>r.id===${item.id}))">Akce</button>`:''}<button class="abtn" onclick="editRide(${item.id})">✏</button><button class="abtn del" onclick="delId=${item.id};render()">🗑</button></div>${delId===item.id?`<div class="dcf"><span>Smazat?</span><button class="abtn del" onclick="delRide(${item.id})">Smazat</button><button class="abtn" onclick="delId=null;render()">Zrušit</button></div>`:''}</div>`;
     }).join('')}
   `;
@@ -1657,8 +1877,20 @@ function renderSouhrny(){
       <div class="sum-row"><span class="sum-lbl">Celkem litrů</span><span class="sum-val blue">${totalLiters.toFixed(1)} l</span></div>
       <div class="sum-row"><span class="sum-lbl">Celková cena</span><span class="sum-val blue">${Math.round(totalFuel).toLocaleString('cs-CZ')} Kč</span></div>
       ${avgPricePer>0?`<div class="sum-row"><span class="sum-lbl">Průměr Kč/litr</span><span class="sum-val">${avgPricePer.toFixed(2)} Kč</span></div>`:''}
-      ${consumption>0?`<div class="sum-row"><span class="sum-lbl">Průměrná spotřeba</span><span class="sum-val green">${consumption.toFixed(1)} l/100km</span></div>`:''}
     </div>`:''}
+    ${(()=>{const st=computeFullTankStats(filtFuels);if(!st.avgConsumption)return filtFuels.length>=2?`<div class="sum-card" style="border-color:rgba(251,146,60,.2);"><div class="sum-title" style="color:var(--o);">⚠ Spotřeba zatím nedostupná</div><div style="font-size:12px;color:var(--m2);">Pro výpočet spotřeby metodou "full-to-full" jsou potřeba minimálně 2 tankování do plné nádrže. Zaškrtávej "Plná nádrž" u tankování.</div></div>`:'';
+    return`<div class="sum-card" style="border-color:rgba(74,222,128,.2);"><div class="sum-title" style="color:var(--g);">📊 Spotřeba (full-to-full)</div>
+      <div class="sum-row"><span class="sum-lbl">Průměrná spotřeba</span><span class="sum-val green">${st.avgConsumption} l/100km</span></div>
+      ${st.avgCostPerKm?`<div class="sum-row"><span class="sum-lbl">Průměrná cena</span><span class="sum-val green">${st.avgCostPerKm.toFixed(2)} Kč/km</span></div>`:''}
+      <div class="sum-row"><span class="sum-lbl">Ověřeno na</span><span class="sum-val">${st.totalKmTracked.toLocaleString('cs-CZ')} km</span></div>
+      <div class="sum-row"><span class="sum-lbl">Počet plných nádrží</span><span class="sum-val">${st.tankStats.length+1}×</span></div>
+    </div>
+    <div class="sum-card"><div class="sum-title">📋 Detail po nádržích</div>
+      ${st.tankStats.slice().reverse().map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--b);">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--m2);margin-bottom:4px;"><span>${fmtD(t.date)} · ${t.station||'?'}</span><span>${t.fromKm.toLocaleString('cs-CZ')} → ${t.toKm.toLocaleString('cs-CZ')} km</span></div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;"><span><strong style="color:var(--a);">${t.km}</strong> km</span><span><strong style="color:var(--bl);">${t.liters} l</strong></span><span><strong style="color:var(--g);">${t.consumption} l/100</strong></span><span><strong style="color:var(--pu);">${t.costPerKm.toFixed(2)} Kč/km</strong></span></div>
+      </div>`).join('')}
+    </div>`;})()}
 
     ${byP.length>0?`<div class="sum-card"><div class="sum-title">Podle účelu</div>${byP.map(p=>`<div class="sum-row"><span class="sum-lbl" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}<br><span style="font-size:10px;color:var(--m);">${p.count}×</span></span><span class="sum-val accent" style="flex-shrink:0;margin-left:10px;">${p.km} km</span></div>`).join('')}</div>`:''}
 
@@ -1737,6 +1969,9 @@ function scheduleNightSeal(){
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init(){
   await openDB();await reload();await migrateFromOlderDBs();loadSaved();
+  // Backfill addresses for records that have GPS but no readable address (offline entries)
+  if(navigator.onLine)setTimeout(()=>backfillAddresses(),2000);
+  window.addEventListener('online',()=>setTimeout(()=>backfillAddresses(),1000));
   const pinOk=await checkPin();if(!pinOk){await new Promise(r=>setTimeout(r,100));return;}
   const ar=await dbGet('meta','activeRideId');activeRideId=ar?.value||null;
   const ns=await dbGet('meta','notif');
